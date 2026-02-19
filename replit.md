@@ -49,12 +49,13 @@ When the Invoice button is pressed, the backend creates entries in these tables:
 9. Stock deduction via FIFO from `stock_master` with cost tracking from `nista_stock`
 
 ## Print Integration
-- GET `/api/invoice-data/:billNo` returns complete print data as JSON matching PHP structure
-- JSON structure: { company, invoice, items[], summary, footer }
-- Uses `expo-print` (Print.printAsync) to print directly from within the POS app
-- HTML receipt template formatted for 80mm thermal printer (monospace font, dashed dividers)
-- Auto-triggers system print dialog on Invoice button click (no external app needed)
-- Receipt format matches the Android Kotlin ESC/POS format: company header, invoice details, items table, totals, footer
+- POST `/api/print-receipt` sends ESC/POS commands directly to thermal printer via TCP socket
+- Backend builds raw ESC/POS byte commands (initialize, alignment, bold, double-size, cut)
+- Connects to printer via TCP on PRINTER_IP:PRINTER_PORT (default port 9100)
+- Silent printing: no dialog, no popup - receipt prints automatically on Invoice click
+- Receipt format: company header (double-size bold), invoice details, items table, totals, footer, auto-cut
+- Requires PRINTER_IP environment variable (thermal printer's network IP address)
+- Optional PRINTER_PORT env var (defaults to 9100, standard raw print port)
 
 ## Database Column Mappings (Critical)
 ### menu_category table
