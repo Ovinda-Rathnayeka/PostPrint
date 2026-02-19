@@ -121,9 +121,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const now = new Date();
-      const dateStr = now.toISOString().slice(0, 19).replace("T", " ");
-      const todayStr = now.toISOString().slice(0, 10);
-      const timeStr = now.toTimeString().slice(0, 8);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const dateStr = `${todayStr} ${timeStr}`;
 
       let scPercent = 10;
       try {
@@ -138,46 +139,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const item of items) {
         const amount = item.price * item.qty;
         await query(
-          "INSERT INTO nista_bill_master (billno, billdate, icode, iname, logBranch, warehouse, quantity, uprice, amount, total, addAll, logUser, printok, customer, paytype, room_number, invoiceType, billTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'yes', ?, 'no', ?, ?, '', 'inhouse', ?)",
+          "INSERT INTO nista_bill_master (billno, billdate, icode, iname, logBranch, warehouse, quantity, uprice, amount, total, addAll, logUser, printok, customer, paytype, room_number, invoiceType, cm, sauce, kotno, billTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'yes', ?, 'no', ?, ?, '', 'inhouse', '', '', '', ?)",
           [billno, todayStr, item.code, item.name, branch, branch, item.qty, item.price, amount, amount, userId, cus, paytype, dateStr]
         );
 
         try {
           const menuInfo = await query(
-            "SELECT itemid, quantity FROM menu_master WHERE menucode = ?",
+            "SELECT menucode, menuname, costprice, itemid, quantity FROM menu_master WHERE menucode = ?",
             [item.code]
           );
           if (menuInfo.length > 0 && menuInfo[0].itemid) {
-            const itemId = menuInfo[0].itemid;
-            const menuQty = menuInfo[0].quantity || 1;
-            let remaining = item.qty * menuQty;
+            const menuItemCode = menuInfo[0].itemid;
+            const menuItemQty = menuInfo[0].quantity || 1;
 
-            const stocks = await query(
-              "SELECT id, availableqty FROM stock_master WHERE itemid = ? AND availableqty > 0 ORDER BY id",
-              [itemId]
+            const itemCheck = await query(
+              "SELECT id, statuss FROM item WHERE id = ? AND active = 'yes'",
+              [menuItemCode]
             );
 
-            for (const stock of stocks) {
-              if (remaining <= 0) break;
-              if (remaining >= stock.availableqty) {
-                remaining -= stock.availableqty;
-                await query("UPDATE stock_master SET availableqty = 0 WHERE id = ?", [stock.id]);
-              } else {
-                const newQty = stock.availableqty - remaining;
-                await query("UPDATE stock_master SET availableqty = ? WHERE id = ?", [newQty, stock.id]);
-                remaining = 0;
+            if (itemCheck.length > 0 && itemCheck[0].statuss === 'ditem') {
+              let remaining = item.qty * menuItemQty;
+
+              const stocks = await query(
+                "SELECT sm.availableqty, sm.id, ns.stUnitPrice FROM stock_master sm LEFT JOIN nista_stock ns ON sm.itemid = ns.stItemid AND sm.grnno = ns.stGRNNo WHERE sm.itemid = ? AND sm.availableqty > 0 ORDER BY sm.id",
+                [menuItemCode]
+              );
+
+              for (const stock of stocks) {
+                if (remaining <= 0) break;
+                const stockId = stock.id;
+                const availQty = parseFloat(stock.availableqty);
+                const unitPrice = parseFloat(stock.stUnitPrice) || 0;
+
+                if (remaining > availQty) {
+                  const costamount = availQty * unitPrice;
+                  await query("UPDATE stock_master SET availableqty = 0 WHERE id = ?", [stockId]);
+                  await query(
+                    "INSERT INTO nista_pay_voucher (branch, No, billDate, accName, accCode, DrCr, amount, payStatus, logTime, addAll, logUser, section, payType, itemname, itemcode, company, wareHouse, invotype) VALUES (?, ?, ?, 'cost of sales A/C', 'costsales', 'Dr', ?, 'yes', ?, 'yes', ?, 'in', 'Cash', ?, ?, ?, ?, 'inhouse')",
+                    [branch, billno, todayStr, costamount, dateStr, userId, item.name, item.code, cus, branch]
+                  );
+                  await query(
+                    "INSERT INTO nista_pay_voucher (branch, No, billDate, accName, accCode, DrCr, amount, payStatus, logTime, addAll, logUser, section, payType, itemname, itemcode, company, wareHouse, invotype) VALUES (?, ?, ?, 'inventoryA/c', 'invent', 'Cr', ?, 'yes', ?, 'yes', ?, 'in', 'Cash', ?, ?, ?, ?, 'inhouse')",
+                    [branch, billno, todayStr, costamount, dateStr, userId, item.name, item.code, cus, branch]
+                  );
+                  remaining -= availQty;
+                } else {
+                  const newRemaining = availQty - remaining;
+                  const costamount = remaining * unitPrice;
+                  await query("UPDATE stock_master SET availableqty = ? WHERE id = ?", [newRemaining, stockId]);
+                  await query(
+                    "INSERT INTO nista_pay_voucher (branch, No, billDate, accName, accCode, DrCr, amount, payStatus, logTime, addAll, logUser, section, payType, itemname, itemcode, company, wareHouse, invotype) VALUES (?, ?, ?, 'cost of sales A/C', 'costsales', 'Dr', ?, 'yes', ?, 'yes', ?, 'in', 'Cash', ?, ?, ?, ?, 'inhouse')",
+                    [branch, billno, todayStr, costamount, dateStr, userId, item.name, item.code, cus, branch]
+                  );
+                  await query(
+                    "INSERT INTO nista_pay_voucher (branch, No, billDate, accName, accCode, DrCr, amount, payStatus, logTime, addAll, logUser, section, payType, itemname, itemcode, company, wareHouse, invotype) VALUES (?, ?, ?, 'inventoryA/c', 'invent', 'Cr', ?, 'yes', ?, 'yes', ?, 'in', 'Cash', ?, ?, ?, ?, 'inhouse')",
+                    [branch, billno, todayStr, costamount, dateStr, userId, item.name, item.code, cus, branch]
+                  );
+                  remaining = 0;
+                  break;
+                }
               }
             }
           }
         } catch (stockErr) {
           console.error("Stock update error (non-fatal):", stockErr);
         }
+
+        try {
+          const menuItems = await query(
+            "SELECT mi.item_id, mi.item_quantity, mi.item_name FROM menu_items mi WHERE mi.menucode = ?",
+            [item.code]
+          );
+          for (const mi of menuItems) {
+            const quan = (mi.item_quantity || 1) * item.qty;
+            const existing = await query(
+              "SELECT id, item_qty FROM item_quantity_sale_new WHERE item_id = ? AND date = ?",
+              [mi.item_id, todayStr]
+            );
+            if (existing.length > 0) {
+              const newQty = parseFloat(existing[0].item_qty) + quan;
+              await query("UPDATE item_quantity_sale_new SET item_qty = ? WHERE id = ?", [newQty, existing[0].id]);
+            } else {
+              await query(
+                "INSERT INTO item_quantity_sale_new (item_name, menu_code, item_qty, item_id, inv_num, date, time) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [mi.item_name || '', item.code, quan, mi.item_id, billno, todayStr, timeStr]
+              );
+            }
+          }
+        } catch (itemQtyErr) {
+          console.error("Item quantity sale tracking error (non-fatal):", itemQtyErr);
+        }
       }
 
       const discPerVal = discountRate || 0;
       await query(
-        "INSERT INTO nista_bill_summary (billNo, billDate, amount, discount, subTotal, billTime, user, printOk, customer, paytype, status, paybalense, vat, nbt, branch, servicecharge, disctype, discper, servitype, serviper, invoiceType, dilivery, malTime, slTime, machTime) VALUES (?, ?, ?, ?, ?, ?, ?, 'no', ?, ?, '', ?, '', '0.00', ?, ?, 'percentage', ?, 'no', '0', 'inhouse', 'no', ?, ?, ?)",
-        [billno, dateStr, total, discount, grandTotal, timeStr, userId, cus, paytype, bal, branch, sc, discPerVal, dateStr, dateStr, dateStr]
+        "INSERT INTO nista_bill_summary (billNo, billDate, amount, discount, subTotal, billTime, user, printOk, customer, paytype, status, paybalense, vat, nbt, branch, servicecharge, disctype, discper, servitype, serviper, invoiceType, dilivery, malTime, slTime, machTime, creditrefno) VALUES (?, ?, ?, ?, ?, ?, ?, 'no', ?, ?, '', ?, '', '0.00', ?, ?, '', '', 'no', '0', 'inhouse', 'no', ?, ?, ?, ?)",
+        [billno, dateStr, total, discount, grandTotal, timeStr, userId, cus, paytype, bal, branch, sc, dateStr, dateStr, dateStr, cardRef || ""]
       );
 
       try {
@@ -191,33 +248,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await query(
         "INSERT INTO nista_pay_voucher (branch, wareHouse, No, billDate, accName, accCode, DrCr, amount, payStatus, logTime, addAll, logUser, section, company, invotype) VALUES (?, ?, ?, ?, 'Sales Account', 'sal1', 'Cr', ?, 'yes', ?, 'yes', ?, 'in', ?, 'inhouse')",
-        [branch, branch, billno, dateStr, total, dateStr, userId, cus]
+        [branch, branch, billno, dateStr, total, timeStr, userId, cus]
       );
 
-      if (paytype === "Card" || paytype === "CardandCash") {
-        const cardAmt = paytype === "Card" ? grandTotal : (card || 0);
+      try {
         await query(
-          "INSERT INTO nista_pay_voucher (branch, wareHouse, No, billDate, accName, accCode, DrCr, amount, payAmount, payStatus, logTime, addAll, logUser, section, payType, company, invotype, card_reference_no) VALUES (?, ?, ?, ?, 'Card Account', 'creditCard', 'Dr', ?, ?, 'yes', ?, 'yes', ?, 'in', 'Card', ?, 'inhouse', ?)",
-          [branch, branch, billno, dateStr, grandTotal, cardAmt, dateStr, userId, cus, cardRef || ""]
+          "INSERT INTO nista_pay_voucher (wareHouse, No, billDate, description, accName, accCode, DrCr, amount, payAmount, payStatus, logTime, addAll, logUser, section, salesref, company, agrementno, payType, chequeNo, chequeDate, grnNo, grnstatus, billno, invoNo, invotype, itemname, itemcode, logDate, branch, user, card_reference_no, room_number, center) VALUES (?, ?, ?, '', 'Service Charge', 'sca', 'CR', ?, '', '', ?, '', ?, 'invoice', '', '', '', '', '', '', '', '', ?, ?, 'online', '', '', ?, ?, ?, '', '', '')",
+          [branch, billno, todayStr, sc, dateStr, userId, billno, billno, todayStr, branch, userId]
         );
-      }
-      if (paytype === "Cash" || paytype === "CardandCash") {
-        const cashAmt = paytype === "Cash" ? grandTotal : (cash || 0);
-        await query(
-          "INSERT INTO nista_pay_voucher (branch, wareHouse, No, billDate, accName, accCode, DrCr, amount, payAmount, payStatus, logTime, addAll, logUser, section, payType, company, invotype) VALUES (?, ?, ?, ?, 'Cash in hand', 'Cas1', 'Dr', ?, ?, 'yes', ?, 'yes', ?, 'in', 'cash', ?, 'inhouse')",
-          [branch, branch, billno, dateStr, grandTotal, cashAmt, dateStr, userId, cus]
-        );
+      } catch (scVoucherErr) {
+        console.error("Service charge voucher error (non-fatal):", scVoucherErr);
       }
 
       try {
-        const cashVal = paytype === "Cash" ? grandTotal : (paytype === "CardandCash" ? (cash || 0) : 0);
-        const cardVal = paytype === "Card" ? grandTotal : (paytype === "CardandCash" ? (card || 0) : 0);
+        const debtorAmt = serviceCharge ? grandTotal : total;
         await query(
-          "INSERT INTO monycolection (colectiondate, cash, card, cardref, bankname, invoiceno, invotype, tot, balance) VALUES (?, ?, ?, ?, ?, ?, 'counter', ?, ?)",
-          [todayStr, cashVal, cardVal, cardRef || "", bankName || "", billno, grandTotal, bal]
+          "INSERT INTO nista_pay_voucher (wareHouse, No, billDate, description, accName, accCode, DrCr, amount, payAmount, payStatus, logTime, addAll, logUser, section, salesref, company, agrementno, payType, chequeNo, chequeDate, grnNo, grnstatus, billno, invoNo, invotype, itemname, itemcode, logDate, branch, user, card_reference_no, room_number, center) VALUES (?, ?, ?, '', 'Debter control Account', 'DB1', 'DR', ?, '', '', ?, '', ?, 'invoice', '', '', '', '', '', '', '', '', ?, ?, 'table', '', '', ?, ?, ?, '', '', '')",
+          [branch, billno, todayStr, grandTotal, dateStr, userId, billno, billno, todayStr, branch, userId]
         );
-      } catch (moneyErr) {
-        console.error("Money collection error (non-fatal):", moneyErr);
+      } catch (debtorErr) {
+        console.error("Debtor voucher error (non-fatal):", debtorErr);
+      }
+
+      if (paytype === "Card") {
+        await query(
+          "INSERT INTO nista_pay_voucher (branch, wareHouse, No, billDate, accName, accCode, DrCr, amount, payAmount, payStatus, logTime, addAll, logUser, section, payType, company, invotype, card_reference_no) VALUES (?, ?, ?, ?, 'Card Account', 'creditCard', 'Dr', ?, ?, 'yes', ?, 'yes', ?, 'in', 'Card', ?, 'inhouse', ?)",
+          [branch, branch, billno, dateStr, total, card || grandTotal, timeStr, userId, cus, cardRef || ""]
+        );
+
+        try {
+          await query(
+            "INSERT INTO monycolection (colectiondate, jobno, jobtype, cash, card, cardref, cheq, chqno, chqdate, invoiceno, paybyshop, creditamount, invotype, tot, cash_re, balance) VALUES (?, '', '', '', ?, ?, '', '', '', ?, '', '', 'counter', ?, '', ?)",
+            [todayStr, card || grandTotal, cardRef || "", billno, card || grandTotal, bal]
+          );
+        } catch (moneyErr) {
+          console.error("Money collection error (non-fatal):", moneyErr);
+        }
+      } else if (paytype === "Cash") {
+        await query(
+          "INSERT INTO nista_pay_voucher (branch, wareHouse, No, billDate, accName, accCode, DrCr, amount, payAmount, payStatus, logTime, addAll, logUser, section, payType, company, invotype, card_reference_no) VALUES (?, ?, ?, ?, 'Cash in hand', 'Cas1', 'Dr', ?, ?, 'yes', ?, 'yes', ?, 'in', 'cash', ?, 'inhouse', '')",
+          [branch, branch, billno, dateStr, total, cash || grandTotal, timeStr, userId, cus]
+        );
+
+        try {
+          await query(
+            "INSERT INTO monycolection (colectiondate, jobno, jobtype, cash, card, cardref, cheq, chqno, chqdate, invoiceno, paybyshop, creditamount, invotype, tot, cash_re, balance) VALUES (?, '', '', ?, '', '', '', '', '', ?, '', '', 'online', ?, '', ?)",
+            [todayStr, cash || grandTotal, billno, cash || grandTotal, bal]
+          );
+        } catch (moneyErr) {
+          console.error("Money collection error (non-fatal):", moneyErr);
+        }
+      } else if (paytype === "CardandCash") {
+        await query(
+          "INSERT INTO nista_pay_voucher (branch, wareHouse, No, billDate, accName, accCode, DrCr, amount, payAmount, payStatus, logTime, addAll, logUser, section, payType, company, invotype, card_reference_no) VALUES (?, ?, ?, ?, 'Cash in hand', 'Cas1', 'Dr', ?, ?, 'yes', ?, 'yes', ?, 'in', 'cash', ?, 'inhouse', '')",
+          [branch, branch, billno, todayStr, total, cash || 0, timeStr, userId, cus]
+        );
+
+        await query(
+          "INSERT INTO nista_pay_voucher (branch, wareHouse, No, billDate, accName, accCode, DrCr, amount, payAmount, payStatus, logTime, addAll, logUser, section, payType, company, invotype, card_reference_no) VALUES (?, ?, ?, ?, 'Card Account', 'creditCard', 'Dr', ?, ?, 'yes', ?, 'yes', ?, 'in', 'Card', ?, 'inhouse', ?)",
+          [branch, branch, billno, dateStr, total, card || 0, timeStr, userId, cus, cardRef || ""]
+        );
+
+        try {
+          await query(
+            "INSERT INTO monycolection (colectiondate, jobno, jobtype, cash, card, cardref, cheq, chqno, chqdate, invoiceno, paybyshop, creditamount, invotype, tot, cash_re, balance) VALUES (?, '', '', ?, ?, ?, '', '', '', ?, '', '', 'counter', ?, '', ?)",
+            [todayStr, cash || 0, card || 0, cardRef || "", billno, total, bal]
+          );
+        } catch (moneyErr) {
+          console.error("Money collection error (non-fatal):", moneyErr);
+        }
       }
 
       try {
@@ -238,10 +337,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             receiptNo = receiptPrefix + recNum;
           }
         }
+        const payable = total - discount;
+
         await query(
           "INSERT INTO recipt (branch, reciptno, amount, payType, payment, reciptDate, user, status, customer, type, invoiceno) VALUES (?, ?, ?, ?, ?, ?, ?, 'ok', ?, 'Restaurant', ?)",
-          [branch, receiptNo, grandTotal, paytype, grandTotal, dateStr, userId, cus, billno]
+          [branch, receiptNo, payable, paytype, payable, dateStr, userId, cus, billno]
         );
+
+        try {
+          await query(
+            "INSERT INTO deposit_recipt (billName, billNo, branch, reserve_no, reciptno, reciptDate, customer, amount, payment, user, sign) VALUES ('invoice', ?, ?, '', ?, ?, ?, ?, ?, ?, 'yes')",
+            [billno, branch, receiptNo, dateStr, cus, payable, payable, userId]
+          );
+        } catch (depositErr) {
+          console.error("Deposit receipt error (non-fatal):", depositErr);
+        }
       } catch (receiptErr) {
         console.error("Receipt error (non-fatal):", receiptErr);
       }
@@ -256,6 +366,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Place order error:", error);
       return res.status(500).json({ error: "Failed to place order: " + error.message });
+    }
+  });
+
+  app.get("/api/invoice-data/:billNo", async (req: Request, res: Response) => {
+    try {
+      const { billNo } = req.params;
+      const branch = (req.query.branch as string) || "1";
+      const username = (req.query.username as string) || "admin";
+
+      const companyRows = await query(
+        "SELECT * FROM companydetails WHERE branchId = ? LIMIT 1",
+        [branch]
+      );
+      const company = companyRows.length > 0 ? companyRows[0] : {};
+
+      const branchRows = await query(
+        "SELECT branchname FROM branch WHERE id = ? LIMIT 1",
+        [branch]
+      );
+      const branchName = branchRows.length > 0 ? branchRows[0].branchname : "";
+
+      const summaryRows = await query(
+        "SELECT * FROM nista_bill_summary WHERE billNo = ? LIMIT 1",
+        [billNo]
+      );
+      const invoice = summaryRows.length > 0 ? summaryRows[0] : null;
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      const itemRows = await query(
+        "SELECT nbm.quantity, nbm.uprice, nbm.amount, nbm.icode, mm.menuname, mm.menucode FROM nista_bill_master nbm LEFT JOIN menu_master mm ON nbm.icode = mm.menucode WHERE nbm.billno = ? GROUP BY mm.menucode",
+        [billNo]
+      );
+
+      const items = itemRows.map((row: any) => ({
+        name: row.menuname || "",
+        qty: String(row.quantity),
+        price: String(row.uprice),
+        amt: String(row.amount),
+      }));
+
+      const payment = parseFloat(invoice.subTotal) + parseFloat(invoice.paybalense || 0);
+
+      const invoiceData = {
+        company: {
+          name: company.company || "",
+          address: company.adress || "",
+          email: company.email || "",
+          phone: company.tp || "",
+          branch: branchName,
+        },
+        invoice: {
+          id: billNo,
+          date: invoice.billDate || "",
+          time: invoice.billTime || "",
+          orderNo: invoice.jobno || "",
+          cashier: username,
+        },
+        items,
+        summary: {
+          subTotal: String(invoice.amount || "0.00"),
+          serviceCharge: String(invoice.servicecharge || "0.00"),
+          discount: String(invoice.discount || "0.00"),
+          nbt: String(invoice.nbt || "0.00"),
+          vat: String(invoice.vat || "0.00"),
+          delivery: invoice.dilivery || "no",
+          grandTotal: String(invoice.subTotal || "0.00"),
+          payment: String(payment),
+          balance: String(invoice.paybalense || "0.00"),
+        },
+        footer: {
+          message: "Thank you. Come again !!!",
+          software: "Software By MyBiz.lk +94 777721122",
+        },
+      };
+
+      return res.json(invoiceData);
+    } catch (error: any) {
+      console.error("Invoice data error:", error);
+      return res.status(500).json({ error: "Failed to fetch invoice data" });
     }
   });
 
