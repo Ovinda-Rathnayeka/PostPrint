@@ -32,10 +32,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/service-charge", async (_req: Request, res: Response) => {
+    try {
+      const rows = await query(
+        "SELECT precentage_value FROM vat_type WHERE vat_type = 'service_charge' LIMIT 1"
+      );
+      const percentage = rows.length > 0 ? parseFloat(rows[0].precentage_value) || 10 : 10;
+      return res.json({ percentage });
+    } catch (error: any) {
+      console.error("Service charge error:", error);
+      return res.json({ percentage: 10 });
+    }
+  });
+
   app.get("/api/categories", async (_req: Request, res: Response) => {
     try {
       const rows = await query(
-        "SELECT id, catcode, catname FROM menu_category WHERE active = 'yes' ORDER BY catname"
+        "SELECT id, catcode, catname, category FROM menu_category WHERE active = 'yes' ORDER BY catorder"
       );
       return res.json(rows);
     } catch (error: any) {
@@ -112,7 +125,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const todayStr = now.toISOString().slice(0, 10);
       const timeStr = now.toTimeString().slice(0, 8);
 
-      const sc = serviceCharge ? (total * 10) / 100 : 0;
+      let scPercent = 10;
+      try {
+        const scRows = await query("SELECT precentage_value FROM vat_type WHERE vat_type = 'service_charge' LIMIT 1");
+        if (scRows.length > 0) scPercent = parseFloat(scRows[0].precentage_value) || 10;
+      } catch (_e) {}
+      const sc = serviceCharge ? (total * scPercent) / 100 : 0;
       const grandTotal = total + sc - discount;
       const cus = customer || "counter";
       const bal = paytype === "Cash" ? (cash - grandTotal) : 0;
