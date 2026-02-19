@@ -118,7 +118,8 @@ export default function POSScreen() {
 
   const handlePay = async () => {
     if (cartItems.length === 0) return;
-    if (payMethod === "Cash" && cashVal < grandTotal) {
+    const effectiveCash = (payMethod === "Cash" && cashVal === 0) ? grandTotal : cashVal;
+    if (payMethod === "Cash" && effectiveCash < grandTotal) {
       if (Platform.OS === "web") {
         alert("Cash amount must be equal to or greater than the total");
       } else {
@@ -136,7 +137,7 @@ export default function POSScreen() {
         discountRate: discountPercent,
         serviceCharge: serviceChargeOn,
         paytype: payMethod,
-        cash: cashVal,
+        cash: effectiveCash,
         card: parseFloat(cardAmount) || 0,
         cardRef,
         bankName,
@@ -158,31 +159,27 @@ export default function POSScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      setTimeout(() => setSuccessBill(null), 3000);
+      setTimeout(() => setSuccessBill(null), 5000);
 
-      try {
-        const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
-        const invoiceRes = await fetch(invoiceUrl.toString());
-        if (invoiceRes.ok) {
-          const invoiceData = await invoiceRes.json();
-          const jsonString = JSON.stringify(invoiceData);
-          const safeData = encodeURIComponent(jsonString);
-          const appUrl = `ovipos://invoice_view?data=${safeData}`;
-          if (Platform.OS !== "web") {
+      if (Platform.OS !== "web") {
+        try {
+          const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
+          const invoiceRes = await fetch(invoiceUrl.toString());
+          if (invoiceRes.ok) {
+            const invoiceData = await invoiceRes.json();
+            const jsonString = JSON.stringify(invoiceData);
+            const safeData = encodeURIComponent(jsonString);
+            const appUrl = `ovipos://invoice_view?data=${safeData}`;
             try {
               const canOpen = await Linking.canOpenURL(appUrl);
               if (canOpen) {
                 await Linking.openURL(appUrl);
               }
             } catch (_linkErr) {}
-          } else {
-            try {
-              window.location.href = appUrl;
-            } catch (_webErr) {}
           }
+        } catch (printErr) {
+          console.log("Print trigger (non-fatal):", printErr);
         }
-      } catch (printErr) {
-        console.log("Print trigger (non-fatal):", printErr);
       }
     } catch (err: any) {
       const msg = err.message || "Failed to process payment";
