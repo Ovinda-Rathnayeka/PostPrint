@@ -1,7 +1,7 @@
 # POS System - Restaurant Point of Sale
 
 ## Overview
-A mobile POS (Point of Sale) system built with Expo React Native and Express backend. Connects to an existing MySQL database (from PHP POS system) to manage restaurant operations including menu items, orders, billing, and payments.
+A tablet-optimized POS (Point of Sale) system built with Expo React Native and Express backend. Connects to an existing MySQL database (from PHP POS system) to manage restaurant operations including menu items, orders, billing, and payments. Features an all-in-one 3-column layout matching the PHP web POS system.
 
 ## Architecture
 - **Frontend**: Expo React Native with file-based routing (Expo Router)
@@ -9,9 +9,11 @@ A mobile POS (Point of Sale) system built with Expo React Native and Express bac
 - **Database**: External MySQL database at 74.50.67.3 (csquaref_villagebakerytest)
 - **State Management**: React Context (AuthContext, CartContext) + React Query
 - **Auth**: Hardcoded admin/admin login (no database auth)
+- **Layout**: All-in-one 3-column tablet layout (no tab navigation)
 
 ## Key Features
 - Hardcoded admin/admin login credentials
+- 3-column all-in-one POS screen: left (categories), center (menu grid), right (billing/numpad)
 - Menu categories and items browsing with search
 - Categories sorted by `catorder` field (matching PHP system)
 - Cart/order management with quantity controls
@@ -20,6 +22,8 @@ A mobile POS (Point of Sale) system built with Expo React Native and Express bac
 - Dynamic service charge from `vat_type` table (not hardcoded)
 - Bank name and card reference for card payments
 - Invoice generation with CT-prefix bill numbers
+- Integrated number pad for quick data entry
+- Action buttons (Home, Full, KOT, Invoice, Cancel, Credit, Special, Staff)
 - Daily sales summary dashboard
 - Order history with detail view
 
@@ -53,15 +57,11 @@ A mobile POS (Point of Sale) system built with Expo React Native and Express bac
 ## Project Structure
 ```
 app/
-  _layout.tsx          - Root layout with providers
+  _layout.tsx          - Root layout with providers (Stack navigation)
   index.tsx            - Login screen
-  payment.tsx          - Payment modal screen
+  pos.tsx              - All-in-one POS screen (3-column tablet layout)
+  orders.tsx           - Order history + daily summary (modal)
   order-detail.tsx     - Order detail screen
-  (tabs)/
-    _layout.tsx        - Tab layout (POS, Orders, Settings)
-    index.tsx          - POS screen (menu + cart)
-    orders.tsx         - Order history + daily summary
-    settings.tsx       - Settings + DB connection test
 lib/
   AuthContext.tsx       - Authentication state
   CartContext.tsx       - Cart/order state
@@ -72,8 +72,15 @@ server/
   db.ts                - MySQL connection pool
   storage.ts           - In-memory storage (legacy)
 constants/
-  colors.ts            - Theme colors
+  colors.ts            - Theme colors (teal/cyan theme matching PHP system)
 ```
+
+## Color Theme
+- Background: #87CEEB (light blue)
+- Primary: #00A89D (teal)
+- Primary Dark: #008C82
+- Panel Background: #B0E0E6 (powder blue)
+- Menu items: #E0F7FA (light cyan cards)
 
 ## Workflows
 - **Start Backend**: `npm run server:dev` - Express server on port 5000
