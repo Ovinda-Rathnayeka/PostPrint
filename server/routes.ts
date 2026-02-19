@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
+import * as net from "node:net";
 import { query, testConnection } from "./db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -537,6 +538,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Customers error:", error);
       return res.status(500).json({ error: "Failed to fetch customers" });
+    }
+  });
+
+  function buildEscPosReceipt(data: any): Buffer {
+    const ESC = 0x1B;
+    const GS = 0x1D;
+    const LF = 0x0A;
+    const cmds: number[] = [];
+
+    const addBytes = (...bytes: number[]) => bytes.forEach(b => cmds.push(b));
+    const addText = (text: string) => {
+      for (let i = 0; i < text.length; i++) cmds.push(text.charCodeAt(i));
+    };
+    const newLine = () => addBytes(LF);
+    const centerOn = () => addBytes(ESC, 0x61, 1);
+    const leftAlign = () => addBytes(ESC, 0x61, 0);
+    const rightAlign = () => addBytes(ESC, 0x61, 2);
+    const boldOn = () => addBytes(ESC, 0x45, 1);
+    const boldOff = () => addBytes(ESC, 0x45, 0);
+    const doubleSize = () => addBytes(GS, 0x21, 0x11);
+    const normalSize = () => addBytes(GS, 0x21, 0x00);
+    const cutPaper = () => addBytes(GS, 0x56, 0x00);
+
+    const addLine = (text: string) => { addText(text); newLine(); };
+    const COLS = 48;
+    const divider = "=".repeat(COLS);
+    const thinDivider = "-".repeat(COLS);
+
+    const padRight = (s: string, len: number) => s.length >= len ? s.substring(0, len) : s + " ".repeat(len - s.length);
+    const padLeft = (s: string, len: number) => s.length >= len ? s.substring(0, len) : " ".repeat(len - s.length) + s;
+
+    const c = data.company || {};
+    const inv = data.invoice || {};
+    const items = data.items || [];
+    const s = data.summary || {};
+    const f = data.footer || {};
+
+    addBytes(ESC, 0x40);
+
+    centerOn();
+    doubleSize();
+    boldOn();
+    addLine(c.name || "");
+    normalSize();
+    boldOff();
+    if (c.address) addLine(c.address);
+    if (c.email) addLine(c.email);
+    if (c.phone) addLine(`Tel : ${c.phone}`);
+    addLine(divider);
+
+    leftAlign();
+    addLine(`Outlet       : ${c.branch || ""}`);
+    addLine(`Invoice No   : ${inv.id || ""}`);
+    addLine(`Invoice Date : ${inv.date || ""} ${inv.time || ""}`);
+    addLine(`Cashier      : ${inv.cashier || ""}`);
+
+    centerOn();
+    addLine(thinDivider);
+
+    leftAlign();
+    for (const item of items) {
+      const name = item.name || "Item";
+      const qty = (item.qty || "0").padStart(5);
+      const price = (item.price || "0").padStart(10);
+      const amt = (item.amt || "0.00").padStart(12);
+      addLine(name);
+      addLine(`                ${qty} ${price}  ${amt}`);
+    }
+
+    centerOn();
+    addLine(thinDivider);
+
+    rightAlign();
+    addLine(`Sub Total (LKR) :      ${s.subTotal || "0.00"}`);
+    const scVal = parseFloat(s.serviceCharge || "0");
+    if (scVal > 0) addLine(`Service Charge  :      ${scVal.toFixed(2)}`);
+    const discVal = parseFloat(s.discount || "0");
+    if (discVal > 0) addLine(`Discount        :     -${discVal.toFixed(2)}`);
+    boldOn();
+    addLine(`Grand Total (LKR) :      ${s.grandTotal || "0.00"}`);
+    boldOff();
+    addLine(`Payment (LKR) :      ${s.payment || "0.00"}`);
+    const balVal = parseFloat(s.balance || "0");
+    if (balVal > 0) addLine(`Balance (LKR) :      ${balVal.toFixed(2)}`);
+
+    centerOn();
+    addLine(thinDivider);
+    addLine(f.message || "Thank you, come again !!!");
+    normalSize();
+    addLine(f.software || "");
+
+    newLine(); newLine(); newLine(); newLine();
+    cutPaper();
+
+    return Buffer.from(cmds);
+  }
+
+  function sendToPrinter(printerIp: string, printerPort: number, data: Buffer): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const socket = new net.Socket();
+      socket.setTimeout(5000);
+      socket.connect(printerPort, printerIp, () => {
+        socket.write(data, () => {
+          socket.end();
+          resolve();
+        });
+      });
+      socket.on("error", (err) => {
+        socket.destroy();
+        reject(err);
+      });
+      socket.on("timeout", () => {
+        socket.destroy();
+        reject(new Error("Printer connection timeout"));
+      });
+    });
+  }
+
+  app.post("/api/print-receipt", async (req: Request, res: Response) => {
+    try {
+      const { billNo, branch, username } = req.body;
+      if (!billNo) return res.status(400).json({ error: "billNo required" });
+
+      const printerIp = process.env.PRINTER_IP;
+      const printerPort = parseInt(process.env.PRINTER_PORT || "9100");
+      if (!printerIp) return res.status(400).json({ error: "PRINTER_IP not configured" });
+
+      const companyRows = await query(
+        "SELECT * FROM companydetails WHERE branchId = ? LIMIT 1",
+        [branch || "1"]
+      );
+      const company = companyRows.length > 0 ? companyRows[0] : {};
+
+      const branchRows = await query(
+        "SELECT branchname FROM branch WHERE id = ? LIMIT 1",
+        [branch || "1"]
+      );
+      const branchName = branchRows.length > 0 ? branchRows[0].branchname : "";
+
+      const summaryRows = await query(
+        "SELECT * FROM nista_bill_summary WHERE billNo = ? LIMIT 1",
+        [billNo]
+      );
+      const invoice = summaryRows.length > 0 ? summaryRows[0] : null;
+      if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+
+      const itemRows = await query(
+        "SELECT nbm.quantity, nbm.uprice, nbm.amount, nbm.icode, mm.menuname FROM nista_bill_master nbm LEFT JOIN menu_master mm ON nbm.icode = mm.menucode WHERE nbm.billno = ? GROUP BY mm.menucode",
+        [billNo]
+      );
+
+      const items = itemRows.map((row: any) => ({
+        name: row.menuname || "",
+        qty: String(row.quantity),
+        price: String(row.uprice),
+        amt: String(row.amount),
+      }));
+
+      const payment = parseFloat(invoice.subTotal) + parseFloat(invoice.paybalense || 0);
+
+      const invoiceData = {
+        company: {
+          name: company.company || "",
+          address: company.adress || "",
+          email: company.email || "",
+          phone: company.tp || "",
+          branch: branchName,
+        },
+        invoice: {
+          id: billNo,
+          date: invoice.billDate || "",
+          time: invoice.billTime || "",
+          cashier: username || "admin",
+        },
+        items,
+        summary: {
+          subTotal: String(invoice.amount || "0.00"),
+          serviceCharge: String(invoice.servicecharge || "0.00"),
+          discount: String(invoice.discount || "0.00"),
+          grandTotal: String(invoice.subTotal || "0.00"),
+          payment: String(payment),
+          balance: String(invoice.paybalense || "0.00"),
+        },
+        footer: {
+          message: "Thank you, come again !!!",
+          software: "Software By MyBiz.lk +94 777721122",
+        },
+      };
+
+      const receiptData = buildEscPosReceipt(invoiceData);
+      await sendToPrinter(printerIp, printerPort, receiptData);
+
+      return res.json({ success: true, message: "Receipt printed" });
+    } catch (error: any) {
+      console.error("Print error:", error);
+      return res.status(500).json({ error: "Print failed: " + (error.message || "Unknown error") });
     }
   });
 

@@ -12,7 +12,6 @@ import {
   Alert,
   Switch,
   Keyboard,
-  Linking,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -99,69 +98,6 @@ export default function POSScreen() {
   const cashVal = parseFloat(cashAmount) || 0;
   const balance = payMethod === "Cash" ? cashVal - grandTotal : 0;
 
-  const buildReceiptHtml = (inv: any): string => {
-    const c = inv.company || {};
-    const i = inv.invoice || {};
-    const s = inv.summary || {};
-    const items = inv.items || [];
-    const f = inv.footer || {};
-
-    let itemsHtml = "";
-    for (const it of items) {
-      itemsHtml += `<tr>
-        <td style="text-align:left;padding:2px 0;">${it.name}</td>
-        <td style="text-align:center;padding:2px 0;">${it.qty}</td>
-        <td style="text-align:right;padding:2px 0;">${parseFloat(it.price).toFixed(2)}</td>
-        <td style="text-align:right;padding:2px 0;">${parseFloat(it.amt).toFixed(2)}</td>
-      </tr>`;
-    }
-
-    const scVal = parseFloat(s.serviceCharge || "0");
-    const discVal = parseFloat(s.discount || "0");
-    const balVal = parseFloat(s.balance || "0");
-
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-      @page { margin: 0; size: 80mm auto; }
-      body { font-family: 'Courier New', monospace; font-size: 12px; width: 72mm; margin: 0 auto; padding: 4mm; color: #000; }
-      .center { text-align: center; }
-      .right { text-align: right; }
-      .bold { font-weight: bold; }
-      .big { font-size: 16px; }
-      .divider { border-top: 1px dashed #000; margin: 6px 0; }
-      table { width: 100%; border-collapse: collapse; }
-      th { text-align: left; font-size: 11px; border-bottom: 1px solid #000; padding: 2px 0; }
-      td { font-size: 11px; }
-      .total-row { display: flex; justify-content: space-between; margin: 2px 0; }
-      .total-label { font-weight: 600; }
-    </style></head><body>
-      <div class="center bold big">${c.name || ""}</div>
-      ${c.address ? `<div class="center">${c.address}</div>` : ""}
-      ${c.email ? `<div class="center">${c.email}</div>` : ""}
-      ${c.phone ? `<div class="center">Tel : ${c.phone}</div>` : ""}
-      <div class="divider"></div>
-      <div>Outlet&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${c.branch || ""}</div>
-      <div>Invoice No&nbsp;&nbsp;&nbsp;: ${i.id || ""}</div>
-      <div>Invoice Date : ${i.date || ""} ${i.time || ""}</div>
-      <div>Cashier&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${i.cashier || ""}</div>
-      <div class="divider"></div>
-      <table>
-        <tr><th style="text-align:left">Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Amount</th></tr>
-        ${itemsHtml}
-      </table>
-      <div class="divider"></div>
-      <div class="total-row"><span>Sub Total (LKR)</span><span class="right">${parseFloat(s.subTotal || "0").toFixed(2)}</span></div>
-      ${scVal > 0 ? `<div class="total-row"><span>Service Charge</span><span class="right">${scVal.toFixed(2)}</span></div>` : ""}
-      ${discVal > 0 ? `<div class="total-row"><span>Discount</span><span class="right">-${discVal.toFixed(2)}</span></div>` : ""}
-      <div class="divider"></div>
-      <div class="total-row bold"><span>Grand Total (LKR)</span><span class="right">${parseFloat(s.grandTotal || "0").toFixed(2)}</span></div>
-      <div class="total-row"><span>Payment (LKR)</span><span class="right">${parseFloat(s.payment || "0").toFixed(2)}</span></div>
-      ${balVal > 0 ? `<div class="total-row"><span>Balance (LKR)</span><span class="right">${balVal.toFixed(2)}</span></div>` : ""}
-      <div class="divider"></div>
-      <div class="center">${f.message || "Thank you. Come again !!!"}</div>
-      <div class="center" style="font-size:9px;margin-top:4px;">${f.software || ""}</div>
-    </body></html>`;
-  };
-
   const handleAddItem = useCallback((item: MenuItem) => {
     addItem(String(item.menucode), item.menuname, Number(item.sellingprice));
     if (Platform.OS !== "web") {
@@ -228,13 +164,11 @@ export default function POSScreen() {
       setTimeout(() => setSuccessBill(null), 5000);
 
       try {
-        const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
-        const invoiceRes = await fetch(invoiceUrl.toString());
-        if (invoiceRes.ok) {
-          const invoiceData = await invoiceRes.json();
-          const html = buildReceiptHtml(invoiceData);
-          await Print.printAsync({ html });
-        }
+        await apiRequest("POST", "/api/print-receipt", {
+          billNo: data.billNo,
+          branch: user?.branch || "1",
+          username: user?.username || "admin",
+        });
       } catch (printErr) {
         console.log("Print (non-fatal):", printErr);
       }
