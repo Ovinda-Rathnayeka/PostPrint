@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -12,6 +12,7 @@ import {
   Alert,
   Switch,
   Linking,
+  Keyboard,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -58,6 +59,14 @@ export default function POSScreen() {
   const [activeField, setActiveField] = useState<ActiveField>("cash");
 
   const [successBill, setSuccessBill] = useState<string | null>(null);
+
+  const isNative = Platform.OS !== "web";
+
+  useEffect(() => {
+    if (isNative) {
+      Keyboard.dismiss();
+    }
+  }, []);
 
   const webTopInset = Platform.OS === "web" ? 20 : 0;
 
@@ -147,13 +156,7 @@ export default function POSScreen() {
       });
       const data = await res.json();
       setSuccessBill(data.billNo);
-      clearCart();
-      setCashAmount("");
-      setCardAmount("");
-      setCardRef("");
-      setBankName("");
-      setDiscountRate("");
-      setServiceChargeOn(false);
+      resetAll();
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/daily-summary"] });
       if (Platform.OS !== "web") {
@@ -190,24 +193,28 @@ export default function POSScreen() {
     }
   };
 
+  const resetAll = useCallback(() => {
+    clearCart();
+    setCashAmount("");
+    setCardAmount("");
+    setCardRef("");
+    setBankName("");
+    setDiscountRate("");
+    setServiceChargeOn(false);
+    setPayMethod("Cash");
+    setActiveField("cash");
+  }, [clearCart]);
+
   const handleCancelOrder = () => {
     if (cartItems.length === 0) return;
     if (Platform.OS === "web") {
       if (confirm("Cancel current order?")) {
-        clearCart();
-        setCashAmount("");
-        setCardAmount("");
-        setDiscountRate("");
+        resetAll();
       }
     } else {
       Alert.alert("Cancel Order", "Are you sure you want to cancel?", [
         { text: "No", style: "cancel" },
-        { text: "Yes", style: "destructive", onPress: () => {
-          clearCart();
-          setCashAmount("");
-          setCardAmount("");
-          setDiscountRate("");
-        }},
+        { text: "Yes", style: "destructive", onPress: resetAll },
       ]);
     }
   };
@@ -243,6 +250,7 @@ export default function POSScreen() {
               placeholderTextColor="#999"
               value={searchText}
               onChangeText={setSearchText}
+              showSoftInputOnFocus={false}
               testID="search-input"
             />
             {searchText ? (
@@ -431,14 +439,15 @@ export default function POSScreen() {
               {(payMethod === "Cash" || payMethod === "CardandCash") && (
                 <View style={styles.totalRow}>
                   <Text style={styles.totalLabel}>Cash(LKR)</Text>
-                  <Pressable onPress={() => setActiveField("cash")}>
+                  <Pressable onPress={() => { setActiveField("cash"); if (isNative) Keyboard.dismiss(); }}>
                     <TextInput
                       style={[styles.totalInput, activeField === "cash" && styles.totalInputActive]}
                       value={cashAmount}
                       placeholder="0.00"
                       placeholderTextColor="#999"
                       onChangeText={setCashAmount}
-                      onFocus={() => setActiveField("cash")}
+                      onFocus={() => { setActiveField("cash"); if (isNative) Keyboard.dismiss(); }}
+                      showSoftInputOnFocus={false}
                       keyboardType="numeric"
                     />
                   </Pressable>
@@ -449,14 +458,15 @@ export default function POSScreen() {
               {payMethod === "CardandCash" && (
                 <View style={styles.totalRow}>
                   <Text style={styles.totalLabel}>Card(LKR)</Text>
-                  <Pressable onPress={() => setActiveField("cardAmount")}>
+                  <Pressable onPress={() => { setActiveField("cardAmount"); if (isNative) Keyboard.dismiss(); }}>
                     <TextInput
                       style={[styles.totalInput, activeField === "cardAmount" && styles.totalInputActive]}
                       value={cardAmount}
                       placeholder="0.00"
                       placeholderTextColor="#999"
                       onChangeText={setCardAmount}
-                      onFocus={() => setActiveField("cardAmount")}
+                      onFocus={() => { setActiveField("cardAmount"); if (isNative) Keyboard.dismiss(); }}
+                      showSoftInputOnFocus={false}
                       keyboardType="numeric"
                     />
                   </Pressable>
@@ -474,6 +484,7 @@ export default function POSScreen() {
                       placeholder="Bank name"
                       placeholderTextColor="#999"
                       onChangeText={setBankName}
+                      showSoftInputOnFocus={false}
                     />
                   </View>
                   <View style={styles.totalRow}>
@@ -484,6 +495,7 @@ export default function POSScreen() {
                       placeholder="Reference"
                       placeholderTextColor="#999"
                       onChangeText={setCardRef}
+                      showSoftInputOnFocus={false}
                     />
                   </View>
                 </>
@@ -492,14 +504,15 @@ export default function POSScreen() {
               {/* Discount */}
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Discount(%)</Text>
-                <Pressable onPress={() => setActiveField("discount")}>
+                <Pressable onPress={() => { setActiveField("discount"); if (isNative) Keyboard.dismiss(); }}>
                   <TextInput
                     style={[styles.totalInput, activeField === "discount" && styles.totalInputActive]}
                     value={discountRate}
                     placeholder="0"
                     placeholderTextColor="#999"
                     onChangeText={setDiscountRate}
-                    onFocus={() => setActiveField("discount")}
+                    onFocus={() => { setActiveField("discount"); if (isNative) Keyboard.dismiss(); }}
+                    showSoftInputOnFocus={false}
                     keyboardType="numeric"
                   />
                 </Pressable>
@@ -532,7 +545,7 @@ export default function POSScreen() {
               <Pressable style={styles.numKey} onPress={() => handleNumpadPress("3")}>
                 <Text style={styles.numKeyText}>3</Text>
               </Pressable>
-              <Pressable style={[styles.actionKey, { backgroundColor: Colors.light.primary }]} onPress={() => { clearCart(); setCashAmount(""); setCardAmount(""); setDiscountRate(""); }}>
+              <Pressable style={[styles.actionKey, { backgroundColor: Colors.light.primary }]} onPress={resetAll}>
                 <Ionicons name="home" size={18} color="#FFF" />
                 <Text style={styles.actionKeyText}>Home</Text>
               </Pressable>
