@@ -12,13 +12,13 @@ import {
   Alert,
   Switch,
   Keyboard,
+  Linking,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import * as Print from "expo-print";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
