@@ -51,8 +51,10 @@ When the Invoice button is pressed, the backend creates entries in these tables:
 ## Print Integration
 - GET `/api/invoice-data/:billNo` returns complete print data as JSON matching PHP structure
 - JSON structure: { company, invoice, items[], summary, footer }
-- On native (Android tablet): triggers `ovipos://invoice_view?data=ENCODED_JSON` deep link
-- The Android POS print app receives the data and auto-prints to connected thermal printer
+- Uses `expo-print` (Print.printAsync) to print directly from within the POS app
+- HTML receipt template formatted for 80mm thermal printer (monospace font, dashed dividers)
+- Auto-triggers system print dialog on Invoice button click (no external app needed)
+- Receipt format matches the Android Kotlin ESC/POS format: company header, invoice details, items table, totals, footer
 
 ## Database Column Mappings (Critical)
 ### menu_category table
