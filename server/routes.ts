@@ -48,7 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories", async (_req: Request, res: Response) => {
     try {
       const rows = await query(
-        "SELECT id, catcode, catname, category FROM menu_category WHERE active = 'yes' ORDER BY catorder"
+        "SELECT id, catcode, category as catname FROM menu_category WHERE active = 'yes' ORDER BY catorder"
       );
       return res.json(rows);
     } catch (error: any) {
@@ -60,18 +60,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/menu-items", async (req: Request, res: Response) => {
     try {
       const { category, search } = req.query;
-      let sql = "SELECT mm.menucode, mm.menuname, mm.sellingprice, mm.costprice, mm.category, mc.catname FROM menu_master mm LEFT JOIN menu_category mc ON mm.category = mc.catcode WHERE mm.active = 'yes'";
+      let sql = "SELECT menucode, menuname, mprice as sellingprice, costprice, menucat1 as category FROM menu_master WHERE active = 'yes'";
       const params: any[] = [];
 
       if (category && category !== "all") {
-        sql += " AND mm.category = ?";
+        sql += " AND menucat1 = ?";
         params.push(category);
       }
       if (search) {
-        sql += " AND mm.menuname LIKE ?";
+        sql += " AND menuname LIKE ?";
         params.push(`%${search}%`);
       }
-      sql += " ORDER BY mm.menuname";
+      sql += " ORDER BY menuname";
 
       const rows = await query(sql, params);
       return res.json(rows);

@@ -1,38 +1,47 @@
 # POS System - Restaurant Point of Sale
 
 ## Overview
-A mobile POS (Point of Sale) system built with Expo React Native and Express backend. Connects to an existing MySQL database to manage restaurant operations including menu items, orders, billing, and payments.
+A mobile POS (Point of Sale) system built with Expo React Native and Express backend. Connects to an existing MySQL database (from PHP POS system) to manage restaurant operations including menu items, orders, billing, and payments.
 
 ## Architecture
 - **Frontend**: Expo React Native with file-based routing (Expo Router)
 - **Backend**: Express.js with MySQL connection (mysql2)
-- **Database**: External MySQL database (user provides connection details)
+- **Database**: External MySQL database at 74.50.67.3 (csquaref_villagebakerytest)
 - **State Management**: React Context (AuthContext, CartContext) + React Query
+- **Auth**: Hardcoded admin/admin login (no database auth)
 
 ## Key Features
-- User login against MySQL users table
+- Hardcoded admin/admin login credentials
 - Menu categories and items browsing with search
+- Categories sorted by `catorder` field (matching PHP system)
 - Cart/order management with quantity controls
-- Payment processing (Cash, Card, Split payment)
-- Discount and service charge (10%) support
-- Invoice generation with bill numbers (CT format)
+- Payment processing (Cash, Card, CardandCash split)
+- Percentage-based discount (matching PHP's discount-rate approach)
+- Dynamic service charge from `vat_type` table (not hardcoded)
+- Bank name and card reference for card payments
+- Invoice generation with CT-prefix bill numbers
 - Daily sales summary dashboard
 - Order history with detail view
-- MySQL connection testing
 
-## Database Tables Used
-- `users` - User authentication
-- `menu_category` - Menu categories
-- `menu_master` - Menu items with prices
-- `nista_bill_summary` - Bill/invoice summaries
-- `nista_bill_master` - Bill line items
-- `nista_pay_voucher` - Payment vouchers
+## Database Column Mappings (Critical)
+### menu_category table
+- `id`, `catcode` (number), `category` (name - aliased as catname), `catorder`, `active`
+
+### menu_master table
+- `menucode` (number), `menuname`, `mprice` (selling price - aliased as sellingprice)
+- `costprice`, `menucat` (category id), `menucat1` (category code - aliased as category)
+- `active`, `cookm`, `sauce`, `itemname`, `quantity`
+
+### vat_type table
+- `vat_type` (e.g., 'service_charge'), `precentage_value` (service charge %)
+
+### Bill tables
+- `nista_bill_master` - Bill line items (billno, icode, iname, quantity, uprice, amount)
+- `nista_bill_summary` - Bill summaries with disctype, discper, servicecharge fields
+- `nista_pay_voucher` - Payment vouchers with card_reference_no
 - `invoicesummry` - Invoice summary
 - `recipt` - Receipts
-- `monycolection` - Money collection
-- `stock_master` - Stock tracking
-- `companydetails` - Company info
-- `customer` - Customer records
+- `monycolection` - Money collection with bankname, cardref
 
 ## Environment Variables
 - `MYSQL_HOST` - MySQL server IP address

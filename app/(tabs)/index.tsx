@@ -29,12 +29,11 @@ interface Category {
 }
 
 interface MenuItem {
-  menucode: string;
+  menucode: number;
   menuname: string;
-  sellingprice: number;
-  costprice: number;
+  sellingprice: string;
+  costprice: string;
   category: string;
-  catname: string;
 }
 
 export default function POSScreen() {
@@ -66,19 +65,19 @@ export default function POSScreen() {
   });
 
   const handleAddItem = useCallback((item: MenuItem) => {
-    addItem(item.menucode, item.menuname, item.sellingprice);
+    addItem(String(item.menucode), item.menuname, Number(item.sellingprice));
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   }, [addItem]);
 
   const renderCategory = useCallback(({ item }: { item: Category | { catcode: string; catname: string } }) => {
-    const isActive = selectedCategory === item.catcode;
+    const isActive = selectedCategory === String(item.catcode);
     return (
       <Pressable
         style={[styles.categoryChip, isActive && styles.categoryChipActive]}
         onPress={() => {
-          setSelectedCategory(item.catcode);
+          setSelectedCategory(String(item.catcode));
           if (Platform.OS !== "web") Haptics.selectionAsync();
         }}
       >
@@ -88,7 +87,7 @@ export default function POSScreen() {
   }, [selectedCategory]);
 
   const renderMenuItem = useCallback(({ item }: { item: MenuItem }) => {
-    const cartItem = cartItems.find((c) => c.code === item.menucode);
+    const cartItem = cartItems.find((c) => c.code === String(item.menucode));
     return (
       <Pressable
         style={({ pressed }) => [styles.menuCard, pressed && styles.menuCardPressed]}
@@ -159,7 +158,7 @@ export default function POSScreen() {
         <FlatList
           data={allCategories}
           renderItem={renderCategory}
-          keyExtractor={(item) => item.catcode}
+          keyExtractor={(item) => String(item.catcode)}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryList}
@@ -227,7 +226,7 @@ export default function POSScreen() {
         <FlatList
           data={menuItems}
           renderItem={renderMenuItem}
-          keyExtractor={(item) => item.menucode}
+          keyExtractor={(item) => String(item.menucode)}
           numColumns={2}
           columnWrapperStyle={styles.menuRow}
           contentContainerStyle={[styles.menuList, { paddingBottom: tabBarHeight + 80 }]}
