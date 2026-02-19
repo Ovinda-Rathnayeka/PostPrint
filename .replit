@@ -76,8 +76,8 @@ ensurePreviewReachable = "/status"
 [userenv]
 
 [userenv.shared]
-MYSQL_HOST = "localhost"
+MYSQL_HOST = "74.50.67.3"
 MYSQL_PORT = "3306"
-MYSQL_USER = "root"
-MYSQL_PASSWORD = "password"
-MYSQL_DATABASE = "pos_db"
+MYSQL_USER = "csquaref_vb_developer"
+MYSQL_PASSWORD = "sWtuNt7j2KVAK8BGpcgZ"
+MYSQL_DATABASE = "csquaref_villagebakerytest"
