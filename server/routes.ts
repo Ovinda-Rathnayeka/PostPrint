@@ -100,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/place-order", async (req: Request, res: Response) => {
     try {
-      const { items, total, discount, serviceCharge, paytype, cash, card, cardRef, userId, branch, customer } = req.body;
+      const { items, total, discount, discountRate, serviceCharge, paytype, cash, card, cardRef, bankName, userId, branch, customer } = req.body;
 
       const maxResult = await query(
         "SELECT MAX(id) as maxId FROM nista_bill_summary WHERE branch = ? AND (invoiceType='inhouse' OR invoiceType='onlineorders') AND billNo LIKE 'CT%'",
@@ -174,9 +174,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      const discPerVal = discountRate || 0;
       await query(
-        "INSERT INTO nista_bill_summary (billNo, billDate, amount, discount, subTotal, billTime, user, printOk, customer, paytype, status, paybalense, vat, nbt, branch, servicecharge, disctype, discper, servitype, serviper, invoiceType, dilivery, malTime, slTime, machTime) VALUES (?, ?, ?, ?, ?, ?, ?, 'no', ?, ?, '', ?, '', '0.00', ?, ?, '', '', 'no', '0', 'inhouse', 'no', ?, ?, ?)",
-        [billno, dateStr, total, discount, grandTotal, timeStr, userId, cus, paytype, bal, branch, sc, dateStr, dateStr, dateStr]
+        "INSERT INTO nista_bill_summary (billNo, billDate, amount, discount, subTotal, billTime, user, printOk, customer, paytype, status, paybalense, vat, nbt, branch, servicecharge, disctype, discper, servitype, serviper, invoiceType, dilivery, malTime, slTime, machTime) VALUES (?, ?, ?, ?, ?, ?, ?, 'no', ?, ?, '', ?, '', '0.00', ?, ?, 'percentage', ?, 'no', '0', 'inhouse', 'no', ?, ?, ?)",
+        [billno, dateStr, total, discount, grandTotal, timeStr, userId, cus, paytype, bal, branch, sc, discPerVal, dateStr, dateStr, dateStr]
       );
 
       try {
@@ -212,8 +213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const cashVal = paytype === "Cash" ? grandTotal : (paytype === "CardandCash" ? (cash || 0) : 0);
         const cardVal = paytype === "Card" ? grandTotal : (paytype === "CardandCash" ? (card || 0) : 0);
         await query(
-          "INSERT INTO monycolection (colectiondate, cash, card, cardref, invoiceno, invotype, tot, balance) VALUES (?, ?, ?, ?, ?, 'counter', ?, ?)",
-          [todayStr, cashVal, cardVal, cardRef || "", billno, grandTotal, bal]
+          "INSERT INTO monycolection (colectiondate, cash, card, cardref, bankname, invoiceno, invotype, tot, balance) VALUES (?, ?, ?, ?, ?, ?, 'counter', ?, ?)",
+          [todayStr, cashVal, cardVal, cardRef || "", bankName || "", billno, grandTotal, bal]
         );
       } catch (moneyErr) {
         console.error("Money collection error (non-fatal):", moneyErr);

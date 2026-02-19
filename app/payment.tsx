@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
@@ -28,20 +29,27 @@ export default function PaymentScreen() {
   const { user } = useAuth();
   const { items, total, clearCart } = useCart();
   const [payMethod, setPayMethod] = useState<PaymentMethod>("Cash");
-  const [discount, setDiscount] = useState("");
+  const [discountRate, setDiscountRate] = useState("");
   const [serviceCharge, setServiceCharge] = useState(false);
   const [cashAmount, setCashAmount] = useState("");
   const [cardAmount, setCardAmount] = useState("");
   const [cardRef, setCardRef] = useState("");
+  const [bankName, setBankName] = useState("");
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [billNo, setBillNo] = useState("");
 
+  const { data: scData } = useQuery<{ percentage: number }>({
+    queryKey: ["/api/service-charge"],
+  });
+  const scPercent = scData?.percentage ?? 10;
+
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const webBottomInset = Platform.OS === "web" ? 34 : 0;
 
-  const discountAmt = parseFloat(discount) || 0;
-  const sc = serviceCharge ? (total * 10) / 100 : 0;
+  const discountPercent = parseFloat(discountRate) || 0;
+  const discountAmt = (total * discountPercent) / 100;
+  const sc = serviceCharge ? (total * scPercent) / 100 : 0;
   const grandTotal = total + sc - discountAmt;
   const cashVal = parseFloat(cashAmount) || 0;
   const balance = payMethod === "Cash" ? cashVal - grandTotal : 0;
@@ -63,11 +71,13 @@ export default function PaymentScreen() {
         items: items.map((i) => ({ code: i.code, name: i.name, price: i.price, qty: i.qty })),
         total,
         discount: discountAmt,
+        discountRate: discountPercent,
         serviceCharge,
         paytype: payMethod,
         cash: cashVal,
         card: parseFloat(cardAmount) || 0,
         cardRef,
+        bankName,
         userId: user?.id || "1",
         branch: user?.branch || "1",
         customer: "counter",
@@ -145,13 +155,13 @@ export default function PaymentScreen() {
           </View>
           {sc > 0 && (
             <View style={styles.summaryLine}>
-              <Text style={styles.summaryLabel}>Service Charge (10%)</Text>
+              <Text style={styles.summaryLabel}>Service Charge ({scPercent}%)</Text>
               <Text style={styles.summaryValue}>Rs. {sc.toFixed(2)}</Text>
             </View>
           )}
           {discountAmt > 0 && (
             <View style={styles.summaryLine}>
-              <Text style={[styles.summaryLabel, { color: Colors.light.danger }]}>Discount</Text>
+              <Text style={[styles.summaryLabel, { color: Colors.light.danger }]}>Discount ({discountPercent}%)</Text>
               <Text style={[styles.summaryValue, { color: Colors.light.danger }]}>-Rs. {discountAmt.toFixed(2)}</Text>
             </View>
           )}
@@ -169,21 +179,21 @@ export default function PaymentScreen() {
             if (Platform.OS !== "web") Haptics.selectionAsync();
           }}
         >
-          <Text style={styles.toggleLabel}>Add 10% service charge</Text>
+          <Text style={styles.toggleLabel}>Add {scPercent}% service charge</Text>
           <View style={[styles.toggle, serviceCharge && styles.toggleActive]}>
             <View style={[styles.toggleDot, serviceCharge && styles.toggleDotActive]} />
           </View>
         </Pressable>
 
-        <Text style={styles.fieldLabel}>Discount Amount</Text>
+        <Text style={styles.fieldLabel}>Discount Rate (%)</Text>
         <View style={styles.inputRow}>
-          <Text style={styles.inputPrefix}>Rs.</Text>
+          <Text style={styles.inputPrefix}>%</Text>
           <TextInput
             style={styles.inputField}
-            placeholder="0.00"
+            placeholder="0"
             placeholderTextColor={Colors.light.textSecondary}
-            value={discount}
-            onChangeText={setDiscount}
+            value={discountRate}
+            onChangeText={setDiscountRate}
             keyboardType="numeric"
           />
         </View>
@@ -246,6 +256,16 @@ export default function PaymentScreen() {
                 </View>
               </>
             )}
+            <Text style={styles.fieldLabel}>Bank Name</Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={[styles.inputField, { paddingLeft: 14 }]}
+                placeholder="Enter bank name"
+                placeholderTextColor={Colors.light.textSecondary}
+                value={bankName}
+                onChangeText={setBankName}
+              />
+            </View>
             <Text style={styles.fieldLabel}>Card Reference</Text>
             <View style={styles.inputRow}>
               <TextInput
