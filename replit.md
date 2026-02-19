@@ -26,6 +26,33 @@ A tablet-optimized POS (Point of Sale) system built with Expo React Native and E
 - Action buttons (Home, Full, KOT, Invoice, Cancel, Credit, Special, Staff)
 - Daily sales summary dashboard
 - Order history with detail view
+- Android POS printer integration via ovipos:// deep link (native only)
+- Complete accounting voucher entries matching PHP system 100%
+
+## Invoice Creation (PHP-matching logic)
+When the Invoice button is pressed, the backend creates entries in these tables:
+1. `nista_bill_master` - Line items for the bill
+2. `nista_bill_summary` - Bill summary with creditrefno field
+3. `invoicesummry` - Invoice summary
+4. `nista_pay_voucher` entries:
+   - Sales Account (sal1, Cr) - total amount
+   - Service Charge (sca, CR) - service charge amount
+   - Debtor control Account (DB1, DR) - grand total
+   - Cash in hand (Cas1, Dr) - for Cash/Split payments
+   - Card Account (creditCard, Dr) - for Card/Split payments
+   - cost of sales A/C (costsales, Dr) - for stock items with statuss='ditem'
+   - inventoryA/c (invent, Cr) - for stock items with statuss='ditem'
+5. `monycolection` - Money collection record
+6. `recipt` - Receipt with MR/CR prefix
+7. `deposit_recipt` - Deposit receipt linking bill to receipt
+8. `item_quantity_sale_new` - Daily item quantity tracking
+9. Stock deduction via FIFO from `stock_master` with cost tracking from `nista_stock`
+
+## Print Integration
+- GET `/api/invoice-data/:billNo` returns complete print data as JSON matching PHP structure
+- JSON structure: { company, invoice, items[], summary, footer }
+- On native (Android tablet): triggers `ovipos://invoice_view?data=ENCODED_JSON` deep link
+- The Android POS print app receives the data and auto-prints to connected thermal printer
 
 ## Database Column Mappings (Critical)
 ### menu_category table
