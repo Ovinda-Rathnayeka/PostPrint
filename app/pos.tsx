@@ -11,6 +11,7 @@ import {
   ScrollView,
   Alert,
   Switch,
+  Linking,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -158,6 +159,31 @@ export default function POSScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       setTimeout(() => setSuccessBill(null), 3000);
+
+      try {
+        const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
+        const invoiceRes = await fetch(invoiceUrl.toString());
+        if (invoiceRes.ok) {
+          const invoiceData = await invoiceRes.json();
+          const jsonString = JSON.stringify(invoiceData);
+          const safeData = encodeURIComponent(jsonString);
+          const appUrl = `ovipos://invoice_view?data=${safeData}`;
+          if (Platform.OS !== "web") {
+            try {
+              const canOpen = await Linking.canOpenURL(appUrl);
+              if (canOpen) {
+                await Linking.openURL(appUrl);
+              }
+            } catch (_linkErr) {}
+          } else {
+            try {
+              window.location.href = appUrl;
+            } catch (_webErr) {}
+          }
+        }
+      } catch (printErr) {
+        console.log("Print trigger (non-fatal):", printErr);
+      }
     } catch (err: any) {
       const msg = err.message || "Failed to process payment";
       if (Platform.OS === "web") alert(msg);
