@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   StyleSheet,
   Text,
@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import Colors from "@/constants/colors";
@@ -42,7 +41,6 @@ interface DailySummary {
 
 export default function OrdersScreen() {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const { user } = useAuth();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 
@@ -66,43 +64,16 @@ export default function OrdersScreen() {
     },
   });
 
-  const renderOrder = ({ item }: { item: Order }) => {
-    const payColor = item.paytype === "Cash" ? Colors.light.success : item.paytype === "Card" ? Colors.light.accent : Colors.light.primary;
-    return (
-      <Pressable
-        style={({ pressed }) => [styles.orderCard, pressed && { opacity: 0.9 }]}
-        onPress={() => router.push({ pathname: "/order-detail", params: { billNo: item.billNo } })}
-      >
-        <View style={styles.orderLeft}>
-          <View style={[styles.orderIcon, { backgroundColor: payColor + "20" }]}>
-            <Ionicons
-              name={item.paytype === "Cash" ? "cash" : item.paytype === "Card" ? "card" : "wallet"}
-              size={20}
-              color={payColor}
-            />
-          </View>
-          <View>
-            <Text style={styles.orderBillNo}>{item.billNo}</Text>
-            <Text style={styles.orderDate}>
-              {new Date(item.billDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.orderRight}>
-          <Text style={styles.orderAmount}>Rs. {Number(item.subTotal).toFixed(2)}</Text>
-          <View style={[styles.payBadge, { backgroundColor: payColor + "20" }]}>
-            <Text style={[styles.payBadgeText, { color: payColor }]}>{item.paytype}</Text>
-          </View>
-        </View>
-      </Pressable>
-    );
-  };
-
   return (
     <View style={[styles.container, { paddingTop: insets.top + webTopInset }]}>
       <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color={Colors.light.text} />
+        </Pressable>
         <Text style={styles.headerTitle}>Orders</Text>
-        <Text style={styles.headerDate}>{new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</Text>
+        <Text style={styles.headerDate}>
+          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+        </Text>
       </View>
 
       {summary ? (
@@ -143,11 +114,41 @@ export default function OrdersScreen() {
 
       <FlatList
         data={orders}
-        renderItem={renderOrder}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={[styles.orderList, { paddingBottom: tabBarHeight + 20 }]}
+        contentContainerStyle={styles.orderList}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={false} onRefresh={() => refetch()} />}
+        renderItem={({ item }) => {
+          const payColor = item.paytype === "Cash" ? Colors.light.success : item.paytype === "Card" ? Colors.light.accent : Colors.light.primary;
+          return (
+            <Pressable
+              style={({ pressed }) => [styles.orderCard, pressed && { opacity: 0.9 }]}
+              onPress={() => router.push({ pathname: "/order-detail", params: { billNo: item.billNo } })}
+            >
+              <View style={styles.orderLeft}>
+                <View style={[styles.orderIcon, { backgroundColor: payColor + "20" }]}>
+                  <Ionicons
+                    name={item.paytype === "Cash" ? "cash" : item.paytype === "Card" ? "card" : "wallet"}
+                    size={20}
+                    color={payColor}
+                  />
+                </View>
+                <View>
+                  <Text style={styles.orderBillNo}>{item.billNo}</Text>
+                  <Text style={styles.orderDate}>
+                    {new Date(item.billDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.orderRight}>
+                <Text style={styles.orderAmount}>Rs. {Number(item.subTotal).toFixed(2)}</Text>
+                <View style={[styles.payBadge, { backgroundColor: payColor + "20" }]}>
+                  <Text style={[styles.payBadgeText, { color: payColor }]}>{item.paytype}</Text>
+                </View>
+              </View>
+            </Pressable>
+          );
+        }}
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.emptyState}>
@@ -169,15 +170,24 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
+    backgroundColor: "#F5F7FA",
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.light.text,
   },
@@ -185,7 +195,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_400Regular",
     color: Colors.light.textSecondary,
-    marginTop: 2,
+    marginLeft: "auto",
   },
   summarySection: {
     paddingHorizontal: 20,
@@ -198,12 +208,12 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: Colors.light.surface,
+    backgroundColor: "#FFF",
     borderRadius: 16,
     padding: 14,
     gap: 6,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderColor: "#F3F4F6",
   },
   summaryCardPrimary: {
     borderColor: Colors.light.primary + "30",
@@ -221,13 +231,13 @@ const styles = StyleSheet.create({
   },
   summaryMini: {
     flex: 1,
-    backgroundColor: Colors.light.surface,
+    backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 10,
     alignItems: "center",
     gap: 4,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderColor: "#F3F4F6",
   },
   summaryMiniLabel: {
     fontSize: 11,
@@ -249,17 +259,18 @@ const styles = StyleSheet.create({
   },
   orderList: {
     paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   orderCard: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: Colors.light.surface,
+    backgroundColor: "#FFF",
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderColor: "#F3F4F6",
   },
   orderLeft: {
     flexDirection: "row",

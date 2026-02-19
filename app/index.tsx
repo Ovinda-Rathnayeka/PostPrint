@@ -29,7 +29,7 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/(tabs)");
+      router.replace("/pos");
     }
   }, [isLoading, user]);
 
@@ -47,7 +47,7 @@ export default function LoginScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      router.replace("/(tabs)");
+      router.replace("/pos");
     } catch (err: any) {
       const msg = err.message?.includes("401")
         ? "Invalid username or password"

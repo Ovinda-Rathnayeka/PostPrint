@@ -15,11 +15,11 @@ SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerShown: false, headerBackTitle: "Back" }}>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="pos" />
       <Stack.Screen
-        name="payment"
+        name="orders"
         options={{
           presentation: "modal",
           animation: "slide_from_bottom",
