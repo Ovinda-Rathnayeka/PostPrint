@@ -13,6 +13,7 @@ import {
   Switch,
   Linking,
   Keyboard,
+  Modal,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,6 +39,14 @@ interface MenuItem {
   category: string;
 }
 
+interface InvoiceData {
+  company: { name: string; address: string; email: string; phone: string; branch: string };
+  invoice: { id: string; date: string; time: string; orderNo: string; cashier: string };
+  items: { name: string; qty: string; price: string; amt: string }[];
+  summary: { subTotal: string; serviceCharge: string; discount: string; nbt: string; vat: string; delivery: string; grandTotal: string; payment: string; balance: string };
+  footer: { message: string; software: string };
+}
+
 type PaymentMethod = "Cash" | "Card" | "CardandCash";
 type ActiveField = "cash" | "discount" | "cardAmount" | null;
 
@@ -59,6 +68,8 @@ export default function POSScreen() {
   const [activeField, setActiveField] = useState<ActiveField>("cash");
 
   const [successBill, setSuccessBill] = useState<string | null>(null);
+  const [receiptData, setReceiptData] = useState<InvoiceData | null>(null);
+  const [receiptVisible, setReceiptVisible] = useState(false);
 
   const isNative = Platform.OS !== "web";
 
@@ -159,30 +170,33 @@ export default function POSScreen() {
       resetAll();
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/daily-summary"] });
-      if (Platform.OS !== "web") {
+      if (isNative) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       setTimeout(() => setSuccessBill(null), 5000);
 
-      if (Platform.OS !== "web") {
-        try {
-          const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
-          const invoiceRes = await fetch(invoiceUrl.toString());
-          if (invoiceRes.ok) {
-            const invoiceData = await invoiceRes.json();
-            const jsonString = JSON.stringify(invoiceData);
-            const safeData = encodeURIComponent(jsonString);
-            const appUrl = `ovipos://invoice_view?data=${safeData}`;
+      try {
+        const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
+        const invoiceRes = await fetch(invoiceUrl.toString());
+        if (invoiceRes.ok) {
+          const invoiceData: InvoiceData = await invoiceRes.json();
+          setReceiptData(invoiceData);
+          setReceiptVisible(true);
+
+          if (isNative) {
             try {
+              const jsonString = JSON.stringify(invoiceData);
+              const safeData = encodeURIComponent(jsonString);
+              const appUrl = `ovipos://invoice_view?data=${safeData}`;
               const canOpen = await Linking.canOpenURL(appUrl);
               if (canOpen) {
                 await Linking.openURL(appUrl);
               }
             } catch (_linkErr) {}
           }
-        } catch (printErr) {
-          console.log("Print trigger (non-fatal):", printErr);
         }
+      } catch (printErr) {
+        console.log("Print trigger (non-fatal):", printErr);
       }
     } catch (err: any) {
       const msg = err.message || "Failed to process payment";
@@ -204,6 +218,23 @@ export default function POSScreen() {
     setPayMethod("Cash");
     setActiveField("cash");
   }, [clearCart]);
+
+  const handlePrintReceipt = useCallback(async () => {
+    if (!receiptData || !isNative) return;
+    try {
+      const jsonString = JSON.stringify(receiptData);
+      const safeData = encodeURIComponent(jsonString);
+      const appUrl = `ovipos://invoice_view?data=${safeData}`;
+      const canOpen = await Linking.canOpenURL(appUrl);
+      if (canOpen) {
+        await Linking.openURL(appUrl);
+      } else {
+        Alert.alert("Print App Not Found", "Please install the OviPOS print app to print receipts.");
+      }
+    } catch (_err) {
+      Alert.alert("Print Error", "Could not open print app.");
+    }
+  }, [receiptData, isNative]);
 
   const handleCancelOrder = () => {
     if (cartItems.length === 0) return;
@@ -624,6 +655,118 @@ export default function POSScreen() {
           </View>
         </View>
       </View>
+
+      <Modal
+        visible={receiptVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReceiptVisible(false)}
+      >
+        <View style={styles.receiptOverlay}>
+          <View style={styles.receiptModal}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.receiptScroll}>
+              {receiptData && (
+                <>
+                  <Text style={styles.receiptCompanyName}>{receiptData.company.name}</Text>
+                  {receiptData.company.address ? <Text style={styles.receiptCompanyInfo}>{receiptData.company.address}</Text> : null}
+                  {receiptData.company.phone ? <Text style={styles.receiptCompanyInfo}>Tel: {receiptData.company.phone}</Text> : null}
+                  {receiptData.company.branch ? <Text style={styles.receiptCompanyInfo}>Branch: {receiptData.company.branch}</Text> : null}
+
+                  <View style={styles.receiptDivider} />
+
+                  <View style={styles.receiptInfoRow}>
+                    <Text style={styles.receiptInfoLabel}>Bill No:</Text>
+                    <Text style={styles.receiptInfoValue}>{receiptData.invoice.id}</Text>
+                  </View>
+                  <View style={styles.receiptInfoRow}>
+                    <Text style={styles.receiptInfoLabel}>Date:</Text>
+                    <Text style={styles.receiptInfoValue}>{receiptData.invoice.date}</Text>
+                  </View>
+                  <View style={styles.receiptInfoRow}>
+                    <Text style={styles.receiptInfoLabel}>Time:</Text>
+                    <Text style={styles.receiptInfoValue}>{receiptData.invoice.time}</Text>
+                  </View>
+                  <View style={styles.receiptInfoRow}>
+                    <Text style={styles.receiptInfoLabel}>Cashier:</Text>
+                    <Text style={styles.receiptInfoValue}>{receiptData.invoice.cashier}</Text>
+                  </View>
+
+                  <View style={styles.receiptDivider} />
+
+                  <View style={styles.receiptTableHeader}>
+                    <Text style={[styles.receiptTableCol, { flex: 2 }]}>Item</Text>
+                    <Text style={[styles.receiptTableCol, { flex: 0.5, textAlign: "center" }]}>Qty</Text>
+                    <Text style={[styles.receiptTableCol, { flex: 1, textAlign: "right" }]}>Price</Text>
+                    <Text style={[styles.receiptTableCol, { flex: 1, textAlign: "right" }]}>Amount</Text>
+                  </View>
+                  <View style={styles.receiptDividerThin} />
+
+                  {receiptData.items.map((item, idx) => (
+                    <View key={idx} style={styles.receiptTableRow}>
+                      <Text style={[styles.receiptTableCell, { flex: 2 }]} numberOfLines={1}>{item.name}</Text>
+                      <Text style={[styles.receiptTableCell, { flex: 0.5, textAlign: "center" }]}>{item.qty}</Text>
+                      <Text style={[styles.receiptTableCell, { flex: 1, textAlign: "right" }]}>{parseFloat(item.price).toFixed(2)}</Text>
+                      <Text style={[styles.receiptTableCell, { flex: 1, textAlign: "right" }]}>{parseFloat(item.amt).toFixed(2)}</Text>
+                    </View>
+                  ))}
+
+                  <View style={styles.receiptDivider} />
+
+                  <View style={styles.receiptTotalRow}>
+                    <Text style={styles.receiptTotalLabel}>Sub Total</Text>
+                    <Text style={styles.receiptTotalValue}>{parseFloat(receiptData.summary.subTotal).toFixed(2)}</Text>
+                  </View>
+                  {parseFloat(receiptData.summary.serviceCharge) > 0 && (
+                    <View style={styles.receiptTotalRow}>
+                      <Text style={styles.receiptTotalLabel}>Service Charge</Text>
+                      <Text style={styles.receiptTotalValue}>{parseFloat(receiptData.summary.serviceCharge).toFixed(2)}</Text>
+                    </View>
+                  )}
+                  {parseFloat(receiptData.summary.discount) > 0 && (
+                    <View style={styles.receiptTotalRow}>
+                      <Text style={styles.receiptTotalLabel}>Discount</Text>
+                      <Text style={[styles.receiptTotalValue, { color: Colors.light.danger }]}>-{parseFloat(receiptData.summary.discount).toFixed(2)}</Text>
+                    </View>
+                  )}
+                  <View style={styles.receiptDividerThin} />
+                  <View style={styles.receiptTotalRow}>
+                    <Text style={[styles.receiptTotalLabel, { fontFamily: "Inter_700Bold", fontSize: 16 }]}>Grand Total</Text>
+                    <Text style={[styles.receiptTotalValue, { fontFamily: "Inter_700Bold", fontSize: 16 }]}>{parseFloat(receiptData.summary.grandTotal).toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.receiptTotalRow}>
+                    <Text style={styles.receiptTotalLabel}>Payment</Text>
+                    <Text style={styles.receiptTotalValue}>{parseFloat(receiptData.summary.payment).toFixed(2)}</Text>
+                  </View>
+                  {parseFloat(receiptData.summary.balance) > 0 && (
+                    <View style={styles.receiptTotalRow}>
+                      <Text style={styles.receiptTotalLabel}>Balance</Text>
+                      <Text style={[styles.receiptTotalValue, { color: Colors.light.success }]}>{parseFloat(receiptData.summary.balance).toFixed(2)}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.receiptDivider} />
+
+                  <Text style={styles.receiptFooter}>{receiptData.footer.message}</Text>
+                  <Text style={styles.receiptFooterSoft}>{receiptData.footer.software}</Text>
+                </>
+              )}
+            </ScrollView>
+
+            <View style={styles.receiptActions}>
+              {isNative && (
+                <Pressable style={styles.receiptPrintBtn} onPress={handlePrintReceipt}>
+                  <Ionicons name="print" size={18} color="#FFF" />
+                  <Text style={styles.receiptPrintBtnText}>Print</Text>
+                </Pressable>
+              )}
+              <Pressable style={styles.receiptCloseBtn} onPress={() => setReceiptVisible(false)}>
+                <Ionicons name="close" size={18} color="#FFF" />
+                <Text style={styles.receiptCloseBtnText}>Close</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1002,6 +1145,142 @@ const styles = StyleSheet.create({
   },
   actionKeyText: {
     fontSize: 9,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FFF",
+  },
+
+  receiptOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  receiptModal: {
+    width: 340,
+    maxHeight: "85%",
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  receiptScroll: {
+    padding: 20,
+  },
+  receiptCompanyName: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: "#1A1D26",
+    textAlign: "center",
+    marginBottom: 2,
+  },
+  receiptCompanyInfo: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "#666",
+    textAlign: "center",
+  },
+  receiptDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+    borderStyle: "dashed" as any,
+    marginVertical: 8,
+  },
+  receiptDividerThin: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#DDD",
+    marginVertical: 4,
+  },
+  receiptInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  receiptInfoLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "#666",
+  },
+  receiptInfoValue: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: "#1A1D26",
+  },
+  receiptTableHeader: {
+    flexDirection: "row",
+    marginBottom: 2,
+  },
+  receiptTableCol: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    color: "#333",
+  },
+  receiptTableRow: {
+    flexDirection: "row",
+    paddingVertical: 2,
+  },
+  receiptTableCell: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "#1A1D26",
+  },
+  receiptTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  receiptTotalLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: "#1A1D26",
+  },
+  receiptTotalValue: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: "#1A1D26",
+  },
+  receiptFooter: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "#333",
+    textAlign: "center",
+    marginTop: 4,
+  },
+  receiptFooterSoft: {
+    fontSize: 9,
+    fontFamily: "Inter_400Regular",
+    color: "#999",
+    textAlign: "center",
+    marginTop: 2,
+  },
+  receiptActions: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+  },
+  receiptPrintBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 12,
+    gap: 6,
+  },
+  receiptPrintBtnText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FFF",
+  },
+  receiptCloseBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#5A6577",
+    paddingVertical: 12,
+    gap: 6,
+  },
+  receiptCloseBtnText: {
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: "#FFF",
   },
