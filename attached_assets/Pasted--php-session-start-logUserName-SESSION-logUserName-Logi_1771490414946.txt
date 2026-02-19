@@ -1,0 +1,793 @@
+<?php
+session_start();
+$logUserName  = $_SESSION["logUserName"];    // Login User Name
+$logUserId    = $_SESSION["logUserId"];    // User Id
+$logTitle     = $_SESSION["logTitle"];    // User Title
+$displayName  = $_SESSION["logName"];     // User Name
+$designation  = $_SESSION["logPost"];     // Designation
+$logBranch    = $_SESSION["logBranch"];    // Branch
+$logUserType  = $_SESSION["logUserType"];    // User Type (Admin, User, etc..)
+
+
+if ($innvoicenumber == '' && $logUserId != '') {
+  if (!$logUserId) {
+    header("Location:index.php");
+  }
+  include "db_connect.php";
+  $cus = 'counter';
+  $tot = $_GET['tot'];
+  $disamt = $_GET['disamt'];
+  // $grdbtot = $_GET['netpay'];
+  $card = $_GET['card'];
+  $cash = $_GET['cash'];
+  $type = $_GET['type'];
+  $bank = $_GET['bank'];
+  $ref  = $_GET['ref'];
+  $bal  = $_GET['bal'];
+  $serv  = $_GET['serv'];
+  $paytype  = $_GET['paytype'];
+  $order_no  = $_GET['order'];
+  $delivercharge = '';
+
+  // $createToday = new DateTime('now', new DateTimeZone('Asia/Colombo'));
+  $createToday = new DateTime('now', new DateTimeZone('Asia/Colombo'));
+  $tadetime2 = $createToday->format('Y-m-d H:i:s');
+  $newDateTime = $tadetime2;
+  $select_today = new DateTime('now', new DateTimeZone('Asia/Colombo'));
+  $today = $select_today->format('Y-m-d');
+  $return_data = '';
+
+  $slToday = new DateTime('now', new DateTimeZone('Asia/Colombo'));
+  $malToday = new DateTime('now', new DateTimeZone('Asia/Colombo'));
+  $tadetime = $malToday->format('H:i:s');
+  $mDate  = $malToday->format('Y-m-d H:i:s');
+  $malDate =  $malToday->format('Y-m-d H:i:s');
+  $slDatee =  $slToday->format('Y-m-d H:i:s');
+
+  $select_company_details = mysqli_query($dbconnect, "SELECT * FROM companydetails WHERE branchId = '$logBranch'");
+  $company_details = mysqli_fetch_assoc($select_company_details);
+
+  $select_max_inv_no = mysqli_query($dbconnect, "SELECT MAX(id) FROM nista_bill_summary WHERE branch = '$logBranch' AND (invoiceType='inhouse' OR invoiceType='onlineorders') AND billNo LIKE 'CT%' ");
+  $result_max_inv_no = mysqli_fetch_array($select_max_inv_no);
+
+  if ($result_max_inv_no[0] == '') {  // For New Invoice No
+    $billno = 'CT1001';
+  } else {
+    $jid = $result_max_inv_no[0];
+    $select_inv_no = mysqli_query($dbconnect, "SELECT billNo FROM nista_bill_summary WHERE id = '$jid'");
+    $result_inv_no = mysqli_fetch_array($select_inv_no);
+    $inv = $result_inv_no[0];
+    $n = substr($inv, 2);
+    $k = $n + 1;
+    $billno = 'CT' . $k;
+  }
+
+  $_SESSION["invoice_no"] = $billno;
+
+  $sel = mysqli_query($dbconnect, "SELECT * FROM counter_main WHERE id = (SELECT MAX(id) FROM counter_main)");
+  $res = mysqli_fetch_array($sel);
+
+  mysqli_query($dbconnect, "UPDATE counter_detail SET kot='yes' WHERE m_id='{$res['id']}'");
+  $count_insert_data_select = mysqli_query($dbconnect, "SELECT * FROM counter_detail oo RIGHT JOIN menu_master mm ON oo.itemid = mm.menucode WHERE oo.m_id='{$res['id']}' AND oo.active = 'yes' AND oo.kot = 'yes' AND oo.orderdstatus!='cancel'  GROUP BY oo.itemid");
+
+
+  $count_insert_data = mysqli_num_rows($count_insert_data_select);
+  $total_qty_3 = 0;
+  if ($count_insert_data > 0) {
+    while ($row_3 = mysqli_fetch_assoc($count_insert_data_select)) {
+      $itemId = $row_3['menucode'];
+      $cm = $row_3['cm'];
+      $sauce = $row_3['sauce'];
+      $menu_select_3 = mysqli_query($dbconnect, "SELECT menuname,menucode FROM menu_master WHERE menucode='$itemId' GROUP BY menucode");
+      $menus_3 = mysqli_fetch_assoc($menu_select_3);
+      $alltotal = mysqli_query($dbconnect, "SELECT SUM(subtotal) FROM counter_detail WHERE m_id='{$res['id']}' AND orderdstatus!='cancel'");
+      $tota = mysqli_fetch_array($alltotal);
+      $tot = $tota[0];
+
+      $total_qty_3 = $total_qty_3 + $row_3['qty'];
+      $total_3 = $row_3['unitprice'] * $row_3['qty'];
+      $unitPrice = $row_3['unitprice'];
+      $qty = $row_3['qty'];
+
+      /////////////////////// INVOICING  ////////////////////////////////////
+      $select_item_name = mysqli_query($dbconnect, "SELECT * FROM menu_master WHERE menucode = '$itemId'");
+      while ($row_name = mysqli_fetch_assoc($select_item_name)) {
+        $item_name = $row_name['menuname'];
+        $menucode = $row_name['menucode'];
+        $menucost = $row_name['costprice'];
+        $menuitemcode = $row_name['itemid'];
+        $menuitemqty = $row_name['quantity'];
+        $selectitemcode = mysqli_query($dbconnect, "SELECT id,statuss FROM item WHERE id = '$menuitemcode' AND active = 'yes'");
+        $fetchitemcode = mysqli_fetch_array($selectitemcode);
+        $menuitemcodeid = $fetchitemcode['id'];
+        $menuitemcodestatuss = $fetchitemcode['statuss'];
+        if ($menuitemcodestatuss == 'ditem') {
+          $remaining = $qty * $menuitemqty;
+          $selectprices1 = mysqli_query($dbconnect, "SELECT `availableqty`,`itemid`,`id` FROM `stock_master` where `itemid`='$menuitemcodeid' and availableqty > 0 order by id");
+
+          while ($rowselectprices = mysqli_fetch_array($selectprices1)) {
+            $stockMasterIDs = mysqli_real_escape_string($dbconnect, $rowselectprices['id']); //ok
+            $qt = floatval($qty);
+            $search_Stocks = "SELECT sm.availableqty,sm.id,ns.stUnitPrice  FROM stock_master sm LEFT JOIN nista_stock ns ON sm.itemid=ns.stItemid AND sm.grnno=ns.stGRNNo WHERE sm.id='$stockMasterIDs' AND sm.availableqty > 0 order by sm.itemid";
+            $srcStock = mysqli_query($dbconnect, $search_Stocks);
+            $s = mysqli_fetch_assoc($srcStock);
+            if ($remaining > $s['availableqty']) {
+              $remaining_new = $remaining - $s['availableqty'];
+              $costamount = floatval($s['availableqty'] * $s['stUnitPrice']);
+
+
+              $update_CurrentStock = mysqli_query($dbconnect, "UPDATE `stock_master` SET `availableqty`='0' WHERE `id`='$stockMasterIDs'");
+              $deposit_vouche1 = "INSERT INTO nista_pay_voucher (branch,No,billDate,accName,accCode, DrCr, amount,payStatus,logTime,addAll,logUser,section,payType ,itemname,itemcode,company,wareHouse,invotype) VALUES ('$logBranch','$billno','$date','cost of sales A/C','costsales','Dr','$costamount','yes','$tadetime2','yes','$logUserId','in','Cash','$item_name','$itemId','$cusId','$logBranch','inhouse')";
+              mysqli_query($dbconnect, $deposit_vouche1);
+              $deposit_vouche2 = "INSERT INTO nista_pay_voucher (branch,No,billDate,accName,accCode, DrCr, amount,payStatus,logTime,addAll,logUser,section,payType ,itemname,itemcode,company,wareHouse,invotype) VALUES ('$logBranch','$billno','$date','inventoryA/c','invent','Cr','$costamount','yes','$tadetime2','yes','$logUserId','in','Cash','$item_name','$itemId','$cusId','$logBranch','inhouse')";
+              mysqli_query($dbconnect, $deposit_vouche2);
+              $remaining = $remaining_new;
+            } else if ($remaining <= $s['availableqty']) {
+              $newremaining = $s['availableqty'] - $remaining;
+              $costamount = floatval($remaining * $s['stUnitPrice']);
+
+              $update_CurrentStock = mysqli_query($dbconnect, "UPDATE `stock_master` SET `availableqty`='$newremaining' WHERE `id`='$stockMasterIDs'");
+              $deposit_vouche1 = "INSERT INTO nista_pay_voucher (branch,No,billDate,accName,accCode, DrCr, amount,payStatus,logTime,addAll,logUser,section,payType ,itemname,itemcode,company,wareHouse,invotype) VALUES ('$logBranch','$billno','$date','cost of sales A/C','costsales','Dr','$costamount','yes','$tadetime2','yes','$logUserId','in','Cash','$item_name','$itemId','$cusId','$logBranch','inhouse')";
+              mysqli_query($dbconnect, $deposit_vouche1);
+              $deposit_vouche2 = "INSERT INTO nista_pay_voucher (branch,No,billDate,accName,accCode, DrCr, amount,payStatus,logTime,addAll,logUser,section,payType ,itemname,itemcode,company,wareHouse,invotype) VALUES ('$logBranch','$billno','$date','inventoryA/c','invent','Cr','$costamount','yes','$tadetime2','yes','$logUserId','in','Cash','$item_name','$itemId','$cusId','$logBranch','inhouse')";
+              mysqli_query($dbconnect, $deposit_vouche2);
+              $remaining = 0;
+              break;
+            }
+          }
+        }
+      }
+      if ($delivercharge != '') {
+        $add_items = "INSERT INTO nista_bill_master (billno, billdate, icode, iname, logBranch, warehouse, quantity, uprice, amount, total, addAll, logUser, printok,customer, paytype, room_number,invoiceType,cm,sauce,kotno,billTime) VALUES ('$billno', '$date', '$itemId', '$item_name', '$branch','$branch', '$qty','$unitPrice', '$total_3', '$total_3', 'yes', '$logUserId', 'no','$cusId','$bill1', '','inhouse','$cm','$sauce','$order_no','$tadetime2')";
+        $result_items = mysqli_query($dbconnect, $add_items);
+      } else {
+        $add_items = "INSERT INTO nista_bill_master (billno, billdate, icode, iname, logBranch, warehouse, quantity, uprice, amount, total, addAll, logUser, printok,customer, paytype, room_number,invoiceType,cm,sauce,kotno,billTime) VALUES ('$billno', '$today', '$itemId', '$item_name','$logBranch','$logBranch', '$qty','$unitPrice', '$total_3', '$total_3', 'yes', '$logUserId', 'no','$cus','$paytype', '','inhouse','$cm','$sauce','$order_no','$tadetime2')";
+        $result_items = mysqli_query($dbconnect, $add_items);
+      }
+    }
+  }
+
+
+
+
+  if ($serv == "yes") {
+    $q = mysqli_query($dbconnect, "SELECT precentage_value FROM vat_type WHERE vat_type='value_gst'");
+    $s = mysqli_fetch_array($q);
+
+    $sc = ($tot * 10) / 100;
+    $tz = $tot + $sc;
+    $gst = 0.0;
+    $t = $tot + $gst + $sc - $disamt;
+
+
+    $insert_summary = "INSERT INTO nista_bill_summary (billNo, billDate,  amount, discount, subTotal, billTime, user, printOk, customer, paytype, status, paybalense, vat, nbt,branch,servicecharge,disctype, discper, servitype, serviper, invoiceType, jobno, dilivery,malTime,slTime,machTime,creditrefno) 
+            VALUES ('$billno', '$mDate', '$tot', '$disamt', '$t', '$tadetime', '$logUserId','no', '$cus', '$paytype','', '$bal', '','0.00','$logBranch','$sc','','','no','0','inhouse','$order_no', 'no','$malDate','$slDatee','$mDate','$ref' )";
+
+    $result_summary = mysqli_query($dbconnect, $insert_summary);
+
+    $insert_summary_main = "INSERT INTO invoicesummry (invoiceno, invoicedate, subtotal, discount, grandtot, loguser, customer, paytype, status, paybalance, vat, nbt, branch, service, billtype, logdate, delivery) VALUES 
+            ('$billno', '$mDate', '$tot', ' $disamt', '$t', '$logUserId', '$cus', '$paytype','', '$bal', '','0.00','$logBranch','$sc','restaurant','$today', '')";
+    $result_summary_main = mysqli_query($dbconnect, $insert_summary_main);
+
+
+
+    $deposit_sell_1 = "INSERT INTO nista_pay_voucher (branch,No,billDate,accName,accCode, DrCr, amount,payStatus,logTime,addAll,logUser,section,company,invotype,wareHouse) VALUES 
+            ('$logBranch','$billno','$mDate','Sales Account','sal1','Cr','$tot','yes','$tadetime','yes','$logUserId','in','$cus','inhouse','$logBranch')";
+    mysqli_query($dbconnect, $deposit_sell_1);
+
+
+    $insert3 = mysqli_query($dbconnect, "INSERT INTO `nista_pay_voucher`( `wareHouse`, `No`, `billDate`, `description`, `accName`, `accCode`, `DrCr`, `amount`, `payAmount`, `payStatus`, `logTime`, `addAll`, `logUser`, `section`, `salesref`, `company`, `agrementno`, `payType`, `chequeNo`, `chequeDate`, `grnNo`, `grnstatus`, `billno`, `invoNo`, `invotype`, `itemname`, `itemcode`, `logDate`, `branch`, `user`, `card_reference_no`, `room_number`, `center`) VALUES ('$logBranch','$billno','$today','','Service Charge','sca','CR','$sc','','','$newDateTime','','$logUserId','invoice','','','','','','','','','$billno','$billno','online','','','$today','$logBranch','$logUserId','','','')");
+
+
+    $insert1 = mysqli_query($dbconnect, "INSERT INTO `nista_pay_voucher`( `wareHouse`, `No`, `billDate`, `description`, `accName`, `accCode`, `DrCr`, `amount`, `payAmount`, `payStatus`, `logTime`, `addAll`, `logUser`, `section`, `salesref`, `company`, `agrementno`, `payType`, `chequeNo`, `chequeDate`, `grnNo`, `grnstatus`, `billno`, `invoNo`, `invotype`, `itemname`, `itemcode`, `logDate`, `branch`, `user`, `card_reference_no`, `room_number`, `center`) VALUES ('$logBranch','$billno','$today','','Debter control Account','DB1','DR','$t','','','$newDateTime','','$logUserId','invoice','','','','','','','','','$billno','$billno','table','','','$today','$logBranch','$logUserId','','','')");
+  } else {
+    $q = mysqli_query($dbconnect, "SELECT precentage_value FROM vat_type WHERE vat_type='value_gst'");
+    $s = mysqli_fetch_array($q);
+    $less_tot = $tot;
+    $sc      = 0.00;
+    $gtot = $tot - $disamt;
+
+    $insert_summary = "INSERT INTO nista_bill_summary (billNo, billDate,  amount, discount, subTotal, billTime, user, printOk, customer, paytype, status, paybalense, vat, nbt,branch,servicecharge,disctype, discper, servitype, serviper, invoiceType, jobno, dilivery,malTime,slTime,machTime,creditrefno) 
+            VALUES ('$billno', '$mDate', '$less_tot', '$disamt', '$gtot', '$tadetime', '$logUserId','no', '$cus', '$paytype','', '$bal', '','0.00','$logBranch','$sc','','','no','0','inhouse','$order_no', 'no','$malDate','$slDatee','$mDate','$ref' )";
+
+    $result_summary = mysqli_query($dbconnect, $insert_summary);
+
+    $insert_summary_main = "INSERT INTO invoicesummry (invoiceno, invoicedate, subtotal, discount, grandtot, loguser, customer, paytype, status, paybalance, vat, nbt, branch, service, billtype, logdate, delivery) VALUES 
+            ('$billno', '$mDate', '$less_tot',' $disamt', '$gtot', '$logUserId', '$cus', '$paytype','', '$bal', '','0.00','$logBranch','$sc','restaurant','$today', '')";
+    $result_summary_main = mysqli_query($dbconnect, $insert_summary_main);
+
+
+
+    $deposit_sell_1 = "INSERT INTO nista_pay_voucher (branch,No,billDate,accName,accCode, DrCr, amount,payStatus,logTime,addAll,logUser,section,company,invotype,wareHouse) VALUES 
+            ('$logBranch','$billno','$mDate','Sales Account','sal1','Cr','$less_tot','yes','$tadetime','yes','$logUserId','in','$cus','inhouse','$logBranch')";
+    mysqli_query($dbconnect, $deposit_sell_1);
+
+
+    $insert3 = mysqli_query($dbconnect, "INSERT INTO `nista_pay_voucher`( `wareHouse`, `No`, `billDate`, `description`, `accName`, `accCode`, `DrCr`, `amount`, `payAmount`, `payStatus`, `logTime`, `addAll`, `logUser`, `section`, `salesref`, `company`, `agrementno`, `payType`, `chequeNo`, `chequeDate`, `grnNo`, `grnstatus`, `billno`, `invoNo`, `invotype`, `itemname`, `itemcode`, `logDate`, `branch`, `user`, `card_reference_no`, `room_number`, `center`) VALUES ('$logBranch','$billno','$today','','Service Charge','sca','CR','$sc','','','$newDateTime','','$logUserId','invoice','','','','','','','','','$billno','$billno','online','','','$today','$logBranch','$logUserId','','','')");
+
+
+    $insert1 = mysqli_query($dbconnect, "INSERT INTO `nista_pay_voucher`( `wareHouse`, `No`, `billDate`, `description`, `accName`, `accCode`, `DrCr`, `amount`, `payAmount`, `payStatus`, `logTime`, `addAll`, `logUser`, `section`, `salesref`, `company`, `agrementno`, `payType`, `chequeNo`, `chequeDate`, `grnNo`, `grnstatus`, `billno`, `invoNo`, `invotype`, `itemname`, `itemcode`, `logDate`, `branch`, `user`, `card_reference_no`, `room_number`, `center`) VALUES ('$logBranch','$billno','$today','','Debter control Account','DB1','DR','$tot','','','$newDateTime','','$logUserId','invoice','','','','','','','','','$billno','$billno','table','','','$today','$logBranch','$logUserId','','','')");
+  }
+
+  if ($paytype == 'Card') {
+
+    $deposit_vouche = "INSERT INTO nista_pay_voucher (branch,wareHouse,No,billDate,accName,accCode, DrCr, amount, payAmount,payStatus,logTime,addAll,logUser,section,payType,company,invotype,card_reference_no) VALUES ('$logBranch','$logBranch','$billno','$mDate','Card Account','creditCard','Dr','$tot','$card','yes','$tadetime','yes','$logUserId','in','Card','$cus','inhouse','$ref')";
+    mysqli_query($dbconnect, $deposit_vouche);
+
+    $monydetails =  mysqli_query($dbconnect, "INSERT INTO `monycolection`(`colectiondate`, `jobno`, `jobtype`, `cash`, `card`, `cardref`, `cheq`, `chqno`, `chqdate`, `invoiceno`, `paybyshop`,creditamount,invotype,tot,cash_re,balance) VALUES ('$today','','','','$card','$ref','','','','$billno','','','counter','$card','','$bal')");
+
+    // Select Receipt No
+    $select_max_inv_no = mysqli_query($dbconnect, "SELECT MAX(id) FROM recipt WHERE branch = '$logBranch'");
+    $result_max_inv_no = mysqli_fetch_array($select_max_inv_no);
+    if ($logBranch == '1') {
+      if ($result_max_inv_no[0] == '') {  // For New Invoice No
+        $receiptnNo = 'MR1001';
+      } else {
+        $jid = $result_max_inv_no[0];
+        $select_inv_no = mysqli_query($dbconnect, "SELECT reciptno FROM recipt WHERE id = '$jid'");
+        $result_inv_no = mysqli_fetch_array($select_inv_no);
+        $inv = $result_inv_no[0];
+        $n = substr($inv, 2);
+        $k = $n + 1;
+        $receiptnNo = 'MR' . $k;
+      }
+    } else {
+      if ($result_max_inv_no[0] == '') {  // For New Invoice No
+        $receiptnNo = 'CR1001';
+      } else {
+        $jid = $result_max_inv_no[0];
+        $select_inv_no = mysqli_query($dbconnect, "SELECT reciptno FROM recipt WHERE id = '$jid'");
+        $result_inv_no = mysqli_fetch_array($select_inv_no);
+        $inv = $result_inv_no[0];
+        $n = substr($inv, 2);
+        $k = $n + 1;
+        $receiptnNo = 'CR' . $k;
+      }
+    }
+    $payable = $tot - $disamt;
+
+    // Insert Receipt  
+    $insert_receipt = "INSERT INTO recipt (branch, reciptno, amount, payType, payment, reciptDate, user, status, customer, type,invoiceno) VALUES ('$logBranch', '$receiptnNo', '$payable', 'Card', '$payatype', '$slDatee', '$logUserId', 'ok', '$cus', 'Restaurant','$billno')";
+    mysqli_query($dbconnect, $insert_receipt);
+
+    // Insert Deposit Receipt
+    $insert_deposit = "INSERT INTO deposit_recipt (billName, billNo, branch, reserve_no, reciptno, reciptDate, customer, amount, payment, user, sign) VALUES ('invoice', '$billno', '$logBranch', '', '$receiptnNo', '$slDatee', '$cus', '$payable', '$payable', '$logUserId', 'yes')";
+    mysqli_query($dbconnect, $insert_deposit);
+  } else if ($paytype == "Cash") { //////////////////////////////   Card Else/////////////////////////
+
+    $deposit_vouche = "INSERT INTO nista_pay_voucher (branch,wareHouse,No,billDate,accName,accCode, DrCr, amount, payAmount,payStatus,logTime,addAll,logUser,section,payType,company,invotype,card_reference_no) VALUES ('$logBranch','$logBranch','$billno','$mDate','Cash in hand','Cas1','Dr','$tot','$cash','yes','$tadetime','yes','$logUserId','in','cash','$cus','inhouse','')";
+    mysqli_query($dbconnect, $deposit_vouche);
+
+    $monydetails =  mysqli_query($dbconnect, "INSERT INTO `monycolection`(`colectiondate`, `jobno`, `jobtype`, `cash`, `card`, `cardref`, `cheq`, `chqno`, `chqdate`, `invoiceno`, `paybyshop`,creditamount,invotype,tot,cash_re,balance) VALUES ('$today','','','$cash','','','','','','$billno','','','online','$cash','','$bal')");
+
+    // Select Receipt No
+    $select_max_inv_no = mysqli_query($dbconnect, "SELECT MAX(id) FROM recipt WHERE branch = '$logBranch'");
+    $result_max_inv_no = mysqli_fetch_array($select_max_inv_no);
+    if ($logBranch == '1') {
+      if ($result_max_inv_no[0] == '') {  // For New Invoice No
+        $receiptnNo = 'MR1001';
+      } else {
+        $jid = $result_max_inv_no[0];
+        $select_inv_no = mysqli_query($dbconnect, "SELECT reciptno FROM recipt WHERE id = '$jid'");
+        $result_inv_no = mysqli_fetch_array($select_inv_no);
+        $inv = $result_inv_no[0];
+        $n = substr($inv, 2);
+        $k = $n + 1;
+        $receiptnNo = 'MR' . $k;
+      }
+    } else {
+      if ($result_max_inv_no[0] == '') {  // For New Invoice No
+        $receiptnNo = 'CR1001';
+      } else {
+        $jid = $result_max_inv_no[0];
+        $select_inv_no = mysqli_query($dbconnect, "SELECT reciptno FROM recipt WHERE id = '$jid'");
+        $result_inv_no = mysqli_fetch_array($select_inv_no);
+        $inv = $result_inv_no[0];
+        $n = substr($inv, 2);
+        $k = $n + 1;
+        $receiptnNo = 'CR' . $k;
+      }
+    }
+    $payable = $tot - $disamt;
+
+    // Insert Receipt  
+    $insert_receipt = "INSERT INTO recipt (branch, reciptno, amount, payType, payment, reciptDate, user, status, customer, type,invoiceno) VALUES ('$logBranch', '$receiptnNo', '$payable', '$paytype', '$payable', '$slDatee', '$logUserId', 'ok', '$cus', 'Restaurant','$billno')";
+    mysqli_query($dbconnect, $insert_receipt);
+
+    // Insert Deposit Receipt
+    $insert_deposit = "INSERT INTO deposit_recipt (billName, billNo, branch, reserve_no, reciptno, reciptDate, customer, amount, payment, user, sign) VALUES ('invoice', '$billno', '$logBranch', '', '$receiptnNo', '$slDatee', '$cus', '$payable', '$payable', '$logUserId', 'yes')";
+    mysqli_query($dbconnect, $insert_deposit);
+  } else if ($paytype == "CardandCash") {
+
+    $deposit_vouche = "INSERT INTO nista_pay_voucher (branch,wareHouse,No,billDate,accName,accCode, DrCr, amount, payAmount,payStatus,logTime,addAll,logUser,section,payType,company,invotype,card_reference_no) VALUES ('$logBranch','$logBranch','$billno','$today','Cash in hand','Cas1','Dr','$tot','$cash','yes','$tadetime','yes','$logUserId','in','cash','$cus','inhouse','')";
+    mysqli_query($dbconnect, $deposit_vouche);
+
+    $deposit_vouche1 = "INSERT INTO nista_pay_voucher (branch,wareHouse,No,billDate,accName,accCode, DrCr, amount, payAmount,payStatus,logTime,addAll,logUser,section,payType,company,invotype,card_reference_no) VALUES ('$logBranch','$logBranch','$billno','$mDate','Card Account','creditCard','Dr','$tot','$card','yes','$tadetime','yes','$logUserId','in','Card','$cus','inhouse','$ref')";
+    mysqli_query($dbconnect, $deposit_vouche1);
+
+    $monydetails =  mysqli_query($dbconnect, "INSERT INTO `monycolection`(`colectiondate`, `jobno`, `jobtype`, `cash`, `card`, `cardref`, `cheq`, `chqno`, `chqdate`, `invoiceno`, `paybyshop`,creditamount,invotype,tot,cash_re,balance) VALUES ('$today','','','$cash','$card','$ref','','','','$billno','','','counter','$tot','','$bal')");
+
+    // Select Receipt No
+    $select_max_inv_no = mysqli_query($dbconnect, "SELECT MAX(id) FROM recipt WHERE branch = '$logBranch'");
+    $result_max_inv_no = mysqli_fetch_array($select_max_inv_no);
+    if ($logBranch == '1') {
+      if ($result_max_inv_no[0] == '') {  // For New Invoice No
+        $receiptnNo = 'MR1001';
+      } else {
+        $jid = $result_max_inv_no[0];
+        $select_inv_no = mysqli_query($dbconnect, "SELECT reciptno FROM recipt WHERE id = '$jid'");
+        $result_inv_no = mysqli_fetch_array($select_inv_no);
+        $inv = $result_inv_no[0];
+        $n = substr($inv, 2);
+        $k = $n + 1;
+        $receiptnNo = 'MR' . $k;
+      }
+    } else {
+      if ($result_max_inv_no[0] == '') {  // For New Invoice No
+        $receiptnNo = 'CR1001';
+      } else {
+        $jid = $result_max_inv_no[0];
+        $select_inv_no = mysqli_query($dbconnect, "SELECT reciptno FROM recipt WHERE id = '$jid'");
+        $result_inv_no = mysqli_fetch_array($select_inv_no);
+        $inv = $result_inv_no[0];
+        $n = substr($inv, 2);
+        $k = $n + 1;
+        $receiptnNo = 'CR' . $k;
+      }
+    }
+    $payable = $tot - $disamt;
+
+    $paybal = $cash + $card;
+
+    // Insert Receipt  
+    $insert_receipt = "INSERT INTO recipt (branch, reciptno, amount, payType, payment, reciptDate, user, status, customer, type,invoiceno) VALUES ('$logBranch', '$receiptnNo', '$payable', '$paytype', '$payable', '$slDatee', '$logUserId', 'ok', '$cus', 'Restaurant','$billno')";
+    mysqli_query($dbconnect, $insert_receipt);
+
+    // Insert Deposit Receipt
+    $insert_deposit = "INSERT INTO deposit_recipt (billName, billNo, branch, reserve_no, reciptno, reciptDate, customer, amount, payment, user, sign) VALUES ('invoice', '$billno', '$logBranch', '', '$receiptnNo', '$slDatee', '$cus', '$payable', '$payable', '$logUserId', 'yes')";
+    mysqli_query($dbconnect, $insert_deposit);
+  }
+
+
+  $que12 = mysqli_query($dbconnect, "UPDATE counter_main SET status='ok' WHERE id='{$res['id']}'");
+
+
+
+?>
+  <html>
+
+  <head>
+
+    <style>
+      body {
+        font-family: Calibri;
+        font-weight: normal;
+        color: #000000;
+        font-size: 12px;
+      }
+
+      #invoice-POS {
+        padding: 2mm;
+        margin: 0;
+        background: #FFF;
+
+        ::selection {
+          background: #f31544;
+          color: #FFF;
+        }
+
+        ::moz-selection {
+          background: #f31544;
+          color: #FFF;
+        }
+
+        h1 {
+          font-size: 1.5em;
+          color: #222;
+        }
+
+        h2 {
+          font-size: 1.2em;
+          font-weight: 300;
+        }
+
+        h3 {
+          font-size: .9em;
+          font-weight: 300;
+          line-height: 2em;
+        }
+
+        p {
+          font-size: .7em;
+          color: #666;
+          line-height: 1.2em;
+        }
+
+        #top,
+        #mid,
+        #bot {
+          /* Targets all id with 'col-' */
+          border-bottom: 1px solid #EEE;
+        }
+
+        #top {
+          min-height: 100px;
+        }
+
+        #mid {
+          min-height: 80px;
+        }
+
+        #bot {
+          min-height: 50px;
+        }
+
+        #top .logo {
+
+          height: 60px;
+          width: 60px;
+          background: url(http://michaeltruong.ca/images/logo1.png) no-repeat;
+          background-size: 60px 60px;
+        }
+
+        .clientlogo {
+          float: left;
+          height: 60px;
+          width: 60px;
+          background: url(http://michaeltruong.ca/images/client.jpg) no-repeat;
+          background-size: 60px 60px;
+          border-radius: 50px;
+        }
+
+        .info {
+          display: block;
+          margin-left: 0;
+        }
+
+        .info-company {
+          display: block;
+          margin-left: 0;
+          text-align: center;
+        }
+
+        .title {
+          float: right;
+        }
+
+        .title p {
+          text-align: right;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        td {}
+
+        .tabletitle {
+          font-size: 12px;
+          background: #EEE;
+        }
+
+        .service {
+          border-bottom: 1px solid #EEE;
+        }
+
+        .item {
+          width: 24mm;
+        }
+
+        .itemtext {
+          font-size: .5em;
+        }
+
+
+      }
+
+      @media all {
+        .page-break {
+          display: none;
+        }
+      }
+
+      @media print {
+        .page-break {
+          display: block;
+          page-break-before: always;
+        }
+      }
+    </style>
+  </head>
+
+  <body onLoad="window.print();loaded();">
+  </body>
+
+  </html>
+  <?php
+  $select_invoice = mysqli_query($dbconnect, "SELECT * FROM nista_bill_summary WHERE billNo = '$billno'");
+  $result_invoice = mysqli_fetch_assoc($select_invoice);
+
+  $select_branch = mysqli_query($dbconnect, "SELECT branchname FROM branch WHERE id = '$logBranch'");
+  $result_branch = mysqli_fetch_assoc($select_branch);
+  ?>
+  <div id="invoice-POS">
+    <center id="top">
+      <div class="logo"></div>
+      <div class="info-company">
+        <img src="images/villagebakery_logo_bw2.png" width="80%" height="auto" />
+        <h1><?php echo $company_details['company']; ?></h1>
+        <h3 style="font-size:12px;">
+          <?php echo $company_details['adress']; ?><br>
+          <?php echo $company_details['email']; ?><br>
+          <?php echo $company_details['tp'] ?><br>
+          <b><?php echo $result_branch['branchname'] ?></b>
+        </h3>
+      </div>
+    </center>
+    <br />
+    <div id="table">
+      <table width="100%" border="0" style="font-size:10px;">
+        <tr>
+          <td width="23%"><b>Invoice No.</b> </td>
+          <td width="27%" align="left">: <?php echo $billno; ?></td>
+        </tr>
+        <tr>
+          <td><b>Invoice Date </b> </td>
+          <td align="left">: <?php echo $result_invoice['billDate']; ?></td>
+        </tr>
+        <tr>
+          <td><b>Order No.</b> </td>
+          <td align="left">:<?php echo $order_no; ?></td>
+        </tr>
+        <tr>
+          <td><b>Invoice Date </b> </td>
+          <td align="left">:<?php echo $today; ?></td>
+
+        </tr>
+        <tr>
+          <td align="left"><b>Invoice Time </b></td>
+          <td align="left">&nbsp;<?php echo $result_invoice['billTime']; ?></td>
+        </tr>
+        <tr>
+          <td><b>Cashier</b> </td>
+          <td align="left">: <?php echo $logUserName; ?></td>
+        </tr>
+      </table>
+    </div><br />
+    <div id="table">
+      <table width="100%" border="0" style="border-collapse:collapse; font-size:12px; border:solid 1px #999999 "
+        cellpadding="5">
+        <tr>
+          <td style="width:40%; text-align:left; border:solid 1px #999999" valign="top"><b>Item Name</b></td>
+          <td style="width:5%; text-align:center; border:solid 1px #999999" valign="top"><b>QTY</b></td>
+          <td style="width:20%; text-align:center; border:solid 1px #999999" valign="top"><b>Unit Price</b></td>
+          <td style="width:20%; text-align:center; border:solid 1px #999999" valign="top"><b>Amount (LKR)</b></td>
+
+          <?php
+          // 1. INIT ARRAY FOR APP ITEMS
+          $appItemList = array();
+
+          $select_item = mysqli_query($dbconnect, "SELECT nbm.quantity,nbm.uprice,nbm.amount,nbm.icode,nbm.id,nbm.cm,nbm.sauce,mm.menuname,mm.menucode,cm.*,sa.* FROM nista_bill_master nbm LEFT JOIN menu_master mm ON nbm.icode=mm.menucode  LEFT JOIN cookingmethod cm ON nbm.cm=cm.id LEFT JOIN sauce sa ON nbm.sauce=sa.id WHERE nbm.billno = '$billno' GROUP BY mm.menucode");
+          while ($rows = mysqli_fetch_assoc($select_item)) {
+
+            $menu_item_query = mysqli_query($dbconnect, "SELECT * FROM menu_items WHERE menucode = '{$rows['menucode']}' ");
+            while ($menu_item_result = mysqli_fetch_array($menu_item_query)) {
+              $quan = $menu_item_result['item_quantity'] * $rows['quantity'];
+
+              $get_todayItem_query = mysqli_query($dbconnect, "SELECT * FROM item_quantity_sale_new WHERE item_id='{$menu_item_result['item_id']}' AND `date`='$today'");
+              $get_todayItem_result = mysqli_fetch_array($get_todayItem_query);
+              $get_todayItem_raws = mysqli_num_rows($get_todayItem_query);
+
+              if ($get_todayItem_raws <= 0) {
+                mysqli_query($dbconnect, "INSERT INTO item_quantity_sale_new (`item_name`,`menu_code`, `item_qty`, `item_id`,  `inv_num`, `date`, `time`) VALUES ('{$menu_item_result['item_name']}','{$row['menucode']}','$quan','{$menu_item_result['item_id']}', '$billno','$today','$tadetime' ) ");
+              } else {
+                $upqty = $get_todayItem_result['item_qty'] + $quan;
+                mysqli_query($dbconnect, "UPDATE item_quantity_sale_new SET item_qty='$upqty' WHERE id='{$get_todayItem_result['id']}' ");
+              }
+            }
+
+            // 2. CAPTURE DATA FOR APP
+            $appItemList[] = array(
+              'name'   => $rows['menuname'],
+              'qty'    => $rows['quantity'],
+              'price'  => $rows['uprice'],
+              'amt'    => $rows['amount']
+            );
+          ?>
+        <tr>
+          <td style="border:solid 1px #999999; padding-right:5px;font-size: 12px;" align="left" valign="top"><?php echo $rows['menuname'] ?></td>
+          <td style="border:solid 1px #999999;text-align: center;" valign="top"><?php echo $rows['quantity'] ?></td>
+          <td style="border:solid 1px #999999;text-align: right" valign="top"><?php echo $rows['uprice'] ?></td>
+          <td style="border:solid 1px #999999; padding-right:5px" align="right" valign="top">
+            <?php echo number_format($rows['amount'], '2', '.', ','); ?></td>
+        </tr>
+      <?php }
+
+          // 3. ENCODE TO JSON FOR JS
+          $jsonItems = json_encode($appItemList);
+      ?>
+      </table>
+      <table width="100%" border="0" style="font-size:12px;">
+        <tr>
+          <td colspan="4"></td>
+        </tr>
+
+        <tr>
+          <td colspan="3" align="right"><b>Sub Total (LKR)</b></td>
+          <td style="text-align:right"><?php echo number_format($result_invoice['amount'], '2', '.', ','); ?></td>
+        </tr>
+        <?php if ($result_invoice['servicecharge'] > 0 && $result_invoice['dilivery'] == 'no') { ?>
+          <tr>
+            <td colspan="3" align="right"><b>Service Charge (LKR)</b></td>
+            <td style="text-align:right"><?php echo number_format($result_invoice['servicecharge'], '2'); ?></td>
+          </tr>
+        <?php } ?>
+        <?php if ($result_invoice['discount'] > 0) { ?>
+          <tr>
+            <td colspan="3" align="right"><b>Discount (LKR)</b></td>
+            <td style="text-align:right"><?php echo number_format($result_invoice['discount'], '2', '.', ','); ?></td>
+          </tr>
+        <?php } ?>
+        <?php if ($result_invoice['nbt'] > 0) { ?>
+          <tr>
+            <td colspan="3" align="right"><b>GST (LKR)</b></td>
+            <td style="text-align:right"><?php echo number_format($result_invoice['nbt'], '2', '.', ','); ?></td>
+          </tr>
+        <?php } ?>
+        <?php if ($result_invoice['vat'] > 0) { ?>
+          <tr>
+            <td colspan="3" align="right"><b>VAT (LKR)</b></td>
+            <td style="text-align:right"><?php echo number_format($result_invoice['vat'], '2', '.', ','); ?></td>
+          </tr>
+        <?php } ?>
+        <?php if ($result_invoice['dilivery'] == 'yes') { ?>
+          <tr>
+            <td colspan="3" align="right"><b>Delivery Charge (LKR)</b></td>
+            <td style="text-align:right"><?php echo number_format($result_invoice['servicecharge'], '2', '.', ','); ?>
+            </td>
+          </tr>
+        <?php } ?>
+
+        <tr>
+          <td colspan="3" align="right"><b>Grand Total (LKR)</b></td>
+          <td style="text-align:right"><?php echo number_format($result_invoice['subTotal'], '2', '.', ','); ?></td>
+        </tr>
+        <tr>
+          <td colspan="4"></td>
+        </tr>
+        <?php if ($result_invoice['tableno'] == '') { ?>
+          <tr>
+            <td colspan="3" align="right"><b>Payment (LKR)</b></td>
+            <td style="text-align:right">
+              <?php echo number_format($result_invoice['subTotal'] + $result_invoice['paybalense'], '2', '.', ','); ?>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="3" align="right"><b>Balance (LKR)</b></td>
+            <td style="text-align:right"><?php echo number_format($result_invoice['paybalense'], '2', '.', ','); ?></td>
+          </tr>
+        <?php } ?>
+
+      </table>
+    </div>
+    <div class="info">
+      <h5 align="center">Thank you.come again !!!</h4>
+        <h5 align="center">© Software By MyBiz.lk +94 777721122</h4>
+    </div>
+  </div>
+  <script>
+    function loaded() {
+
+      // ===============================
+      // 1️⃣ Create Full Invoice Object
+      // ===============================
+
+      var invoiceData = {
+
+        // --- Company Details ---
+        company: {
+          name: "<?php echo $company_details['company']; ?>",
+          address: "<?php echo $company_details['adress']; ?>",
+          email: "<?php echo $company_details['email']; ?>",
+          phone: "<?php echo $company_details['tp']; ?>",
+          branch: "<?php echo $result_branch['branchname']; ?>"
+        },
+
+        // --- Invoice Info ---
+        invoice: {
+          id: "<?php echo $billno; ?>",
+          date: "<?php echo $result_invoice['billDate']; ?>",
+          time: "<?php echo $result_invoice['billTime']; ?>",
+          orderNo: "<?php echo $order_no; ?>",
+          cashier: "<?php echo $logUserName; ?>"
+        },
+
+        // --- Items ---
+        items: <?php echo $jsonItems; ?>,
+
+        // --- Summary ---
+        summary: {
+          subTotal: "<?php echo $result_invoice['amount']; ?>",
+          serviceCharge: "<?php echo $result_invoice['servicecharge']; ?>",
+          discount: "<?php echo $result_invoice['discount']; ?>",
+          nbt: "<?php echo $result_invoice['nbt']; ?>",
+          vat: "<?php echo $result_invoice['vat']; ?>",
+          delivery: "<?php echo $result_invoice['dilivery']; ?>",
+          grandTotal: "<?php echo $result_invoice['subTotal']; ?>",
+          payment: "<?php echo $result_invoice['subTotal'] + $result_invoice['paybalense']; ?>",
+          balance: "<?php echo $result_invoice['paybalense']; ?>"
+        },
+
+        // --- Footer ---
+        footer: {
+          message: "Thank you. Come again !!!",
+          software: "Software By MyBiz.lk +94 777721122"
+        }
+      };
+
+
+      // ===============================
+      // 2️⃣ Convert to JSON & Encode
+      // ===============================
+
+      var jsonString = JSON.stringify(invoiceData);
+      var safeData = encodeURIComponent(jsonString);
+
+      // ===============================
+      // 3️⃣ Send to Android App
+      // ===============================
+
+      var appUrl = "ovipos://invoice_view?data=" + safeData;
+      window.location.href = appUrl;
+
+      // ===============================
+      // 4️⃣ Print
+      // ===============================
+
+      setTimeout(function() {
+        window.print();
+      }, 1000);
+
+      // ===============================
+      // 5️⃣ Close Window
+      // ===============================
+
+      setTimeout(CloseMe, 3000);
+    }
+
+
+    function CloseMe() {
+      if (window.opener) {
+        window.opener.location.reload();
+      }
+      window.close();
+    }
+  </script>
+  </body>
+
+  </html>
+<?php
+} else {
+?>
+
+  <center><span style="color:black;font-size: 20px;font-weight: bolder;"> [<?php echo $innvoicenumber ?>] This invoice
+      already printed!!</span></center>
+
+<?php
+
+  if ($logUserId == '') {
+
+    echo "<script>
+      window.location.href = \"index.php\";
+        </script>";
+  } else {
+
+    echo "<script>
+    
+      window.open('','_self').close();
+        </script>";
+  }
+}
+
+?>
