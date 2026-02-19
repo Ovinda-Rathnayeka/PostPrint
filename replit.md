@@ -49,13 +49,12 @@ When the Invoice button is pressed, the backend creates entries in these tables:
 9. Stock deduction via FIFO from `stock_master` with cost tracking from `nista_stock`
 
 ## Print Integration
-- POST `/api/print-receipt` sends ESC/POS commands directly to thermal printer via TCP socket
-- Backend builds raw ESC/POS byte commands (initialize, alignment, bold, double-size, cut)
-- Connects to printer via TCP on PRINTER_IP:PRINTER_PORT (default port 9100)
-- Silent printing: no dialog, no popup - receipt prints automatically on Invoice click
-- Receipt format: company header (double-size bold), invoice details, items table, totals, footer, auto-cut
-- Requires PRINTER_IP environment variable (thermal printer's network IP address)
-- Optional PRINTER_PORT env var (defaults to 9100, standard raw print port)
+- On native (Android tablet): triggers `ovipos://invoice_view?data=ENCODED_JSON` deep link
+- The Android POS print app receives the data and auto-prints to connected USB/Bluetooth thermal printer
+- No dialog, no popup - prints silently and redirects back to POS
+- JSON structure: { company, invoice, items[], summary, footer }
+- GET `/api/invoice-data/:billNo` returns complete print data
+- On web: print is skipped (deep link only works on native)
 
 ## Database Column Mappings (Critical)
 ### menu_category table

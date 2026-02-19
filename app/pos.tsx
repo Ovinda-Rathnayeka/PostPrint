@@ -12,6 +12,7 @@ import {
   Alert,
   Switch,
   Keyboard,
+  Linking,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -163,14 +164,18 @@ export default function POSScreen() {
       }
       setTimeout(() => setSuccessBill(null), 5000);
 
-      try {
-        await apiRequest("POST", "/api/print-receipt", {
-          billNo: data.billNo,
-          branch: user?.branch || "1",
-          username: user?.username || "admin",
-        });
-      } catch (printErr) {
-        console.log("Print (non-fatal):", printErr);
+      if (Platform.OS !== "web") {
+        try {
+          const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
+          const invoiceRes = await fetch(invoiceUrl.toString());
+          if (invoiceRes.ok) {
+            const invoiceData = await invoiceRes.json();
+            const encoded = encodeURIComponent(JSON.stringify(invoiceData));
+            await Linking.openURL(`ovipos://invoice_view?data=${encoded}`);
+          }
+        } catch (printErr) {
+          console.log("Print (non-fatal):", printErr);
+        }
       }
     } catch (err: any) {
       const msg = err.message || "Failed to process payment";
