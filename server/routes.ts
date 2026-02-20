@@ -112,11 +112,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/menu-items", async (req: Request, res: Response) => {
     try {
       const { category, search } = req.query;
-      let sql = "SELECT menucode, menuname, mprice as sellingprice, costprice, menucat1 as category FROM menu_master WHERE active = 'yes'";
+      let sql = "SELECT menucode, menuname, mprice as sellingprice, costprice, menucat as category, menucat1 as catcode FROM menu_master WHERE active = 'yes'";
       const params: any[] = [];
 
       if (category && category !== "all") {
-        sql += " AND menucat1 = ?";
+        sql += " AND menucat = ?";
         params.push(category);
       }
       if (search) {

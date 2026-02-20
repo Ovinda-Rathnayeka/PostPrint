@@ -346,10 +346,10 @@ export default function POSScreen() {
             </Pressable>
             {categories.map((cat) => (
               <Pressable
-                key={String(cat.catcode)}
-                style={[styles.categoryBtn, selectedCategory === String(cat.catcode) && styles.categoryBtnActive]}
+                key={String(cat.id)}
+                style={[styles.categoryBtn, selectedCategory === String(cat.id) && styles.categoryBtnActive]}
                 onPress={() => {
-                  setSelectedCategory(String(cat.catcode));
+                  setSelectedCategory(String(cat.id));
                   if (Platform.OS !== "web") Haptics.selectionAsync();
                 }}
               >
