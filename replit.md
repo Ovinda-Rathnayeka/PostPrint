@@ -49,12 +49,20 @@ When the Invoice button is pressed, the backend creates entries in these tables:
 9. Stock deduction via FIFO from `stock_master` with cost tracking from `nista_stock`
 
 ## Print Integration
-- On native (Android tablet): triggers `ovipos://invoice_view?data=ENCODED_JSON` deep link
-- The Android POS print app receives the data and auto-prints to connected USB/Bluetooth thermal printer
-- No dialog, no popup - prints silently and redirects back to POS
-- JSON structure: { company, invoice, items[], summary, footer }
-- GET `/api/invoice-data/:billNo` returns complete print data
-- On web: print is skipped (deep link only works on native)
+- Uses `expo-print` for receipt printing (system print dialog on Android)
+- GET `/api/invoice-data/:billNo` returns complete print data as JSON
+- HTML receipt generated from invoice data with thermal printer formatting (72mm width)
+- Invoice button: saves order to DB + prints receipt
+- Save button: saves order to DB only (no print)
+- Full screen mode: hides Android navigation bar and status bar using expo-navigation-bar
+
+## Action Buttons
+- Home: clears cart and resets all fields
+- Full: opens order history / daily summary
+- Save (orange): saves order to database without printing
+- Invoice (teal): saves order to database and prints receipt
+- Cancel: cancels current order
+- Credit, Special, Staff: placeholder buttons
 
 ## Database Column Mappings (Critical)
 ### menu_category table
