@@ -197,9 +197,19 @@ export default function POSScreen() {
           const invoiceData = await invoiceRes.json();
           const html = buildReceiptHtml(invoiceData);
           await Print.printAsync({ html });
+          if (Platform.OS === "android") {
+            NavigationBar.setVisibilityAsync("hidden");
+            NavigationBar.setBehaviorAsync("overlay-swipe");
+            RNStatusBar.setHidden(true);
+          }
         }
       } catch (printErr) {
         console.log("Print (non-fatal):", printErr);
+        if (Platform.OS === "android") {
+          NavigationBar.setVisibilityAsync("hidden");
+          NavigationBar.setBehaviorAsync("overlay-swipe");
+          RNStatusBar.setHidden(true);
+        }
       }
     } catch (err: any) {
       const msg = err.message || "Failed to process payment";
