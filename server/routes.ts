@@ -38,7 +38,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rows = await query(
         "SELECT precentage_value FROM vat_type WHERE vat_type = 'service_charge' LIMIT 1"
       );
-      const percentage = rows.length > 0 ? parseFloat(rows[0].precentage_value) || 10 : 10;
+      let percentage = rows.length > 0 ? parseFloat(rows[0].precentage_value) || 10 : 10;
+      if (percentage > 100) percentage = percentage - 100;
       return res.json({ percentage });
     } catch (error: any) {
       console.error("Service charge error:", error);
@@ -130,7 +131,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let scPercent = 10;
       try {
         const scRows = await query("SELECT precentage_value FROM vat_type WHERE vat_type = 'service_charge' LIMIT 1");
-        if (scRows.length > 0) scPercent = parseFloat(scRows[0].precentage_value) || 10;
+        if (scRows.length > 0) {
+          const rawSc = parseFloat(scRows[0].precentage_value) || 10;
+          scPercent = rawSc > 100 ? rawSc - 100 : rawSc;
+        }
       } catch (_e) {}
       const sc = serviceCharge ? (total * scPercent) / 100 : 0;
       const grandTotal = total + sc - discount;

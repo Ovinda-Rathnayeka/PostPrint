@@ -61,6 +61,8 @@ export default function POSScreen() {
   const [activeField, setActiveField] = useState<ActiveField>("cash");
 
   const [successBill, setSuccessBill] = useState<string | null>(null);
+  const [successBalance, setSuccessBalance] = useState<number>(0);
+  const [showNotes, setShowNotes] = useState(false);
 
   const isNative = Platform.OS !== "web";
 
@@ -97,7 +99,8 @@ export default function POSScreen() {
   const { data: scData } = useQuery<{ percentage: number }>({
     queryKey: ["/api/service-charge"],
   });
-  const scPercent = scData?.percentage ?? 10;
+  const rawScPercent = scData?.percentage ?? 10;
+  const scPercent = rawScPercent > 100 ? rawScPercent - 100 : rawScPercent;
 
   const discountPercent = parseFloat(discountRate) || 0;
   const discountAmt = (total * discountPercent) / 100;
@@ -105,6 +108,21 @@ export default function POSScreen() {
   const grandTotal = total + sc - discountAmt;
   const cashVal = parseFloat(cashAmount) || 0;
   const balance = payMethod === "Cash" ? cashVal - grandTotal : 0;
+
+  const NOTES = [5000, 2000, 1000, 500, 100, 50, 20, 10];
+
+  const handleNotePress = useCallback((note: number) => {
+    const current = parseFloat(cashAmount) || 0;
+    setCashAmount(String(current + note));
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+  }, [cashAmount]);
+
+  const handleNoteMinus = useCallback((note: number) => {
+    const current = parseFloat(cashAmount) || 0;
+    const newVal = current - note;
+    setCashAmount(newVal > 0 ? String(newVal) : "0");
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+  }, [cashAmount]);
 
   const handleAddItem = useCallback((item: MenuItem) => {
     addItem(String(item.menucode), item.menuname, Number(item.sellingprice));
@@ -162,15 +180,15 @@ export default function POSScreen() {
     return data;
   };
 
-  const afterOrderSuccess = (billNo: string) => {
+  const afterOrderSuccess = (billNo: string, bal: number) => {
     setSuccessBill(billNo);
+    setSuccessBalance(bal);
     resetAll();
     queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
     queryClient.invalidateQueries({ queryKey: ["/api/daily-summary"] });
     if (isNative) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    setTimeout(() => setSuccessBill(null), 5000);
   };
 
   const buildReceiptHtml = (invoiceData: any) => {
@@ -184,11 +202,12 @@ export default function POSScreen() {
 
   const handleInvoice = async () => {
     if (cartItems.length === 0) return;
+    const currentBalance = balance;
     setProcessing(true);
     try {
       const data = await placeOrder();
       if (!data) { setProcessing(false); return; }
-      afterOrderSuccess(data.billNo);
+      afterOrderSuccess(data.billNo, currentBalance);
 
       try {
         const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
@@ -222,11 +241,12 @@ export default function POSScreen() {
 
   const handleSaveOrder = async () => {
     if (cartItems.length === 0) return;
+    const currentBalance = balance;
     setProcessing(true);
     try {
       const data = await placeOrder();
       if (!data) { setProcessing(false); return; }
-      afterOrderSuccess(data.billNo);
+      afterOrderSuccess(data.billNo, currentBalance);
     } catch (err: any) {
       const msg = err.message || "Failed to save order";
       if (Platform.OS === "web") alert(msg);
@@ -276,10 +296,24 @@ export default function POSScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + webTopInset }]}>
       {successBill && (
-        <View style={styles.successBanner}>
-          <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-          <Text style={styles.successBannerText}>Bill {successBill} created successfully!</Text>
-        </View>
+        <Pressable style={styles.successOverlay} onPress={() => setSuccessBill(null)}>
+          <View style={styles.successModal}>
+            <View style={styles.successIconCircle}>
+              <Ionicons name="checkmark" size={40} color="#FFF" />
+            </View>
+            <Text style={styles.successTitle}>Invoice Saved</Text>
+            <Text style={styles.successBillNo}>{successBill}</Text>
+            {successBalance > 0 && (
+              <View style={styles.successBalanceBox}>
+                <Text style={styles.successBalanceLabel}>Balance</Text>
+                <Text style={styles.successBalanceValue}>LKR {successBalance.toFixed(2)}</Text>
+              </View>
+            )}
+            <Pressable style={styles.successOkBtn} onPress={() => setSuccessBill(null)}>
+              <Text style={styles.successOkText}>OK</Text>
+            </Pressable>
+          </View>
+        </Pressable>
       )}
 
       <View style={styles.mainRow}>
@@ -480,20 +514,44 @@ export default function POSScreen() {
 
               {/* Cash Amount */}
               {(payMethod === "Cash" || payMethod === "CardandCash") && (
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Cash(LKR)</Text>
-                  <Pressable onPress={() => { setActiveField("cash"); if (isNative) Keyboard.dismiss(); }}>
-                    <TextInput
-                      style={[styles.totalInput, activeField === "cash" && styles.totalInputActive]}
-                      value={cashAmount}
-                      placeholder="0.00"
-                      placeholderTextColor="#999"
-                      onChangeText={setCashAmount}
-                      onFocus={() => { setActiveField("cash"); if (isNative) Keyboard.dismiss(); }}
-                      showSoftInputOnFocus={false}
-                      keyboardType="numeric"
-                    />
-                  </Pressable>
+                <View>
+                  <View style={styles.totalRow}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      <Text style={styles.totalLabel}>Cash(LKR)</Text>
+                      <Pressable onPress={() => setShowNotes(!showNotes)} style={{ padding: 2 }}>
+                        <MaterialCommunityIcons name={showNotes ? "chevron-up" : "cash-multiple"} size={18} color={Colors.light.primaryDark} />
+                      </Pressable>
+                    </View>
+                    <Pressable onPress={() => { setActiveField("cash"); if (isNative) Keyboard.dismiss(); }}>
+                      <TextInput
+                        style={[styles.totalInput, activeField === "cash" && styles.totalInputActive]}
+                        value={cashAmount}
+                        placeholder="0.00"
+                        placeholderTextColor="#999"
+                        onChangeText={setCashAmount}
+                        onFocus={() => { setActiveField("cash"); if (isNative) Keyboard.dismiss(); }}
+                        showSoftInputOnFocus={false}
+                        keyboardType="numeric"
+                      />
+                    </Pressable>
+                  </View>
+                  {showNotes && (
+                    <View style={styles.notesGrid}>
+                      {NOTES.map((note) => (
+                        <View key={note} style={styles.noteItem}>
+                          <Pressable style={styles.noteMinusBtn} onPress={() => handleNoteMinus(note)}>
+                            <Ionicons name="remove" size={12} color="#FFF" />
+                          </Pressable>
+                          <Pressable style={styles.noteBtn} onPress={() => handleNotePress(note)}>
+                            <Text style={styles.noteBtnText}>{note >= 1000 ? `${note/1000}K` : note}</Text>
+                          </Pressable>
+                          <Pressable style={styles.notePlusBtn} onPress={() => handleNotePress(note)}>
+                            <Ionicons name="add" size={12} color="#FFF" />
+                          </Pressable>
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
 
@@ -686,30 +744,78 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.light.background,
   },
-  successBanner: {
+  successOverlay: {
     position: "absolute",
-    top: 50,
-    left: "20%",
-    right: "20%",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 100,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  successModal: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 28,
+    alignItems: "center",
+    minWidth: 280,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  successIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: Colors.light.success,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  successTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: Colors.light.success,
+    marginBottom: 4,
+  },
+  successBillNo: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: "#333",
+    marginBottom: 12,
+  },
+  successBalanceBox: {
+    backgroundColor: "#E8F5E9",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  successBalanceLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "#666",
+  },
+  successBalanceValue: {
+    fontSize: 24,
+    fontFamily: "Inter_700Bold",
+    color: Colors.light.success,
+  },
+  successOkBtn: {
+    backgroundColor: Colors.light.primary,
     borderRadius: 8,
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
+    paddingHorizontal: 40,
   },
-  successBannerText: {
+  successOkText: {
     color: "#FFF",
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
   },
   mainRow: {
     flex: 1,
@@ -1057,5 +1163,49 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontFamily: "Inter_600SemiBold",
     color: "#FFF",
+  },
+
+  notesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 3,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  noteItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 1,
+  },
+  noteMinusBtn: {
+    width: 20,
+    height: 24,
+    borderRadius: 3,
+    backgroundColor: Colors.light.danger,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noteBtn: {
+    height: 24,
+    paddingHorizontal: 6,
+    borderRadius: 3,
+    backgroundColor: "#E0F7FA",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#B2DFDB",
+  },
+  noteBtnText: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    color: Colors.light.primaryDark,
+  },
+  notePlusBtn: {
+    width: 20,
+    height: 24,
+    borderRadius: 3,
+    backgroundColor: Colors.light.success,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
