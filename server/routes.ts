@@ -31,6 +31,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = users[0];
+
+      if (user.active && user.active.toLowerCase() !== "yes") {
+        return res.status(403).json({ error: "inactive", message: "Your account has been deactivated. Please contact your service provider for assistance." });
+      }
+
       const dbConnectionId = user.db_connection_id;
 
       if (!dbConnectionId) {

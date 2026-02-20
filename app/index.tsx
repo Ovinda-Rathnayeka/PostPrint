@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   KeyboardAvoidingView,
+  Modal,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,6 +27,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [logging, setLogging] = useState(false);
   const [error, setError] = useState("");
+  const [showInactiveModal, setShowInactiveModal] = useState(false);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -49,12 +51,16 @@ export default function LoginScreen() {
       }
       router.replace("/pos");
     } catch (err: any) {
-      const msg = err.message?.includes("401")
-        ? "Invalid email or password"
-        : err.message?.includes("500")
-        ? "Cannot connect to database. Check settings."
-        : "Login failed. Please try again.";
-      setError(msg);
+      if (err.message?.includes("403")) {
+        setShowInactiveModal(true);
+      } else {
+        const msg = err.message?.includes("401")
+          ? "Invalid email or password"
+          : err.message?.includes("500")
+          ? "Cannot connect to database. Check settings."
+          : "Login failed. Please try again.";
+        setError(msg);
+      }
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
@@ -143,6 +149,35 @@ export default function LoginScreen() {
           )}
         </Pressable>
       </View>
+      <Modal
+        visible={showInactiveModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowInactiveModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconCircle}>
+              <Ionicons name="lock-closed" size={36} color="#FFF" />
+            </View>
+            <Text style={styles.modalTitle}>Account Inactive</Text>
+            <Text style={styles.modalMessage}>
+              Your account is currently deactivated. Please contact your service provider to restore access.
+            </Text>
+            <View style={styles.modalDivider} />
+            <View style={styles.modalContactRow}>
+              <Ionicons name="call-outline" size={18} color={Colors.light.primary} />
+              <Text style={styles.modalContactText}>Contact Support</Text>
+            </View>
+            <Pressable
+              style={styles.modalBtn}
+              onPress={() => setShowInactiveModal(false)}
+            >
+              <Text style={styles.modalBtnText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -253,5 +288,74 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter_600SemiBold",
     color: "#FFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 32,
+    alignItems: "center",
+    width: 340,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  modalIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#FF6B6B",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: "Inter_700Bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  modalDivider: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "#EEE",
+    marginBottom: 16,
+  },
+  modalContactRow: {
+    flexDirection: "row" as const,
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 20,
+  },
+  modalContactText: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.light.primary,
+  },
+  modalBtn: {
+    backgroundColor: Colors.light.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 48,
+  },
+  modalBtnText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
   },
 });
