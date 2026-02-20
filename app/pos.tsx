@@ -212,17 +212,31 @@ export default function POSScreen() {
       afterOrderSuccess(data.billNo, currentBalance);
 
       try {
-        const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
-        const invoiceRes = await fetch(invoiceUrl.toString());
-        if (invoiceRes.ok) {
-          const invoiceData = await invoiceRes.json();
-          const html = buildReceiptHtml(invoiceData);
-          await Print.printAsync({ html });
-          if (Platform.OS === "android") {
-            NavigationBar.setVisibilityAsync("hidden");
-            NavigationBar.setBehaviorAsync("overlay-swipe");
-            RNStatusBar.setHidden(true);
+        const printUrl = new URL("/api/print-receipt", getApiUrl());
+        const printRes = await fetch(printUrl.toString(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            billNo: data.billNo,
+            branch: user?.branch || "1",
+            username: user?.username || "admin",
+          }),
+        });
+        const printResult = await printRes.json();
+        if (!printRes.ok) {
+          console.log("Thermal print failed, falling back to system print:", printResult.error);
+          const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
+          const invoiceRes = await fetch(invoiceUrl.toString());
+          if (invoiceRes.ok) {
+            const invoiceData = await invoiceRes.json();
+            const html = buildReceiptHtml(invoiceData);
+            await Print.printAsync({ html });
           }
+        }
+        if (Platform.OS === "android") {
+          NavigationBar.setVisibilityAsync("hidden");
+          NavigationBar.setBehaviorAsync("overlay-swipe");
+          RNStatusBar.setHidden(true);
         }
       } catch (printErr) {
         console.log("Print (non-fatal):", printErr);
