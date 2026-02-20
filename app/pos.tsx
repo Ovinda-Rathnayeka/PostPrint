@@ -176,7 +176,7 @@ export default function POSScreen() {
           if (invoiceRes.ok) {
             const invoiceData = await invoiceRes.json();
             const encoded = encodeURIComponent(JSON.stringify(invoiceData));
-            await Linking.openURL(`ovipos://invoice_view?data=${encoded}`);
+            Linking.openURL(`ovipos://invoice_view?data=${encoded}`).catch(() => {});
           }
         } catch (printErr) {
           console.log("Print (non-fatal):", printErr);
