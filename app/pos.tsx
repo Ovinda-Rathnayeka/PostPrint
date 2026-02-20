@@ -518,7 +518,7 @@ export default function POSScreen() {
                   <View style={styles.totalRow}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <Text style={styles.totalLabel}>Cash(LKR)</Text>
-                      <Pressable onPress={() => setShowNotes(!showNotes)} style={{ padding: 2 }}>
+                      <Pressable testID="toggle-notes" onPress={() => setShowNotes(!showNotes)} style={{ padding: 2 }}>
                         <MaterialCommunityIcons name={showNotes ? "chevron-up" : "cash-multiple"} size={18} color={Colors.light.primaryDark} />
                       </Pressable>
                     </View>
@@ -539,13 +539,13 @@ export default function POSScreen() {
                     <View style={styles.notesGrid}>
                       {NOTES.map((note) => (
                         <View key={note} style={styles.noteItem}>
-                          <Pressable style={styles.noteMinusBtn} onPress={() => handleNoteMinus(note)}>
+                          <Pressable testID={`note-minus-${note}`} style={styles.noteMinusBtn} onPress={() => handleNoteMinus(note)}>
                             <Ionicons name="remove" size={12} color="#FFF" />
                           </Pressable>
-                          <Pressable style={styles.noteBtn} onPress={() => handleNotePress(note)}>
+                          <Pressable testID={`note-${note}`} style={styles.noteBtn} onPress={() => handleNotePress(note)}>
                             <Text style={styles.noteBtnText}>{note >= 1000 ? `${note/1000}K` : note}</Text>
                           </Pressable>
-                          <Pressable style={styles.notePlusBtn} onPress={() => handleNotePress(note)}>
+                          <Pressable testID={`note-plus-${note}`} style={styles.notePlusBtn} onPress={() => handleNotePress(note)}>
                             <Ionicons name="add" size={12} color="#FFF" />
                           </Pressable>
                         </View>
