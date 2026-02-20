@@ -1,0 +1,243 @@
+package com.example.displaydetails
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.hardware.usb.UsbManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import com.dantsu.escposprinter.EscPosPrinter
+import com.dantsu.escposprinter.connection.DeviceConnection
+import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
+import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
+import com.dantsu.escposprinter.connection.usb.UsbConnection
+import com.dantsu.escposprinter.connection.usb.UsbPrintersConnections
+import org.json.JSONObject
+
+class MainActivity : AppCompatActivity() {
+
+    private var printCompanyName = ""
+    private var printCompanyAddress = ""
+    private var printCompanyEmail = ""
+    private var printCompanyPhone = ""
+    private var printOutlet = ""
+    private var printInvoiceId = ""
+    private var printDate = ""
+    private var printCustomerName = ""
+    private var printItemsString = ""
+    private var printSubTotal = ""
+    private var printTotal = ""
+    private var printPayment = ""
+    private var printBalance = ""
+
+    private lateinit var txtStatus: TextView
+    private val ACTION_USB_PERMISSION = "com.example.displaydetails.USB_PERMISSION"
+    private val POS_URL = "https://csquarefintech.com/villagebakery/branch_test/POS-264.html"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Keep screen on for POS environment
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        setContentView(R.layout.activity_main)
+
+        txtStatus = findViewById(R.id.txtPrinterStatus)
+        findViewById<ImageButton>(R.id.btnSettings).setOnClickListener { showPrinterSelectionDialog() }
+
+        checkBluetoothPermissions()
+        handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        val uriData: Uri? = intent?.data
+        if (uriData != null && uriData.scheme == "ovipos") {
+            val jsonDataString = uriData.getQueryParameter("data")
+            if (!jsonDataString.isNullOrEmpty()) {
+                parseAndPrint(jsonDataString)
+            }
+        }
+    }
+
+    private fun parseAndPrint(json: String) {
+        try {
+            val root = JSONObject(json)
+            val company = root.getJSONObject("company")
+            val invoice = root.getJSONObject("invoice")
+            val summary = root.getJSONObject("summary")
+            val itemsArray = root.getJSONArray("items")
+
+            printCompanyName = company.optString("name", "ORIENT BAKERY")
+            printCompanyAddress = company.optString("address", "")
+            printCompanyEmail = company.optString("email", "")
+            printCompanyPhone = company.optString("phone", "")
+            printOutlet = company.optString("branch", "")
+
+            printInvoiceId = invoice.optString("id", "N/A")
+            printDate = "${invoice.optString("date")} ${invoice.optString("time")}"
+            printCustomerName = invoice.optString("cashier", "N/A")
+
+            printSubTotal = summary.optString("subTotal", "0.00")
+            printTotal = summary.optString("grandTotal", "0.00")
+            printPayment = summary.optString("payment", "0.00")
+            printBalance = summary.optString("balance", "0.00")
+
+            val container = findViewById<LinearLayout>(R.id.itemsContainer)
+            container.removeAllViews()
+
+            var tableBuffer = ""
+            for (i in 0 until itemsArray.length()) {
+                val item = itemsArray.getJSONObject(i)
+                val name = item.optString("name", "Item")
+                val qty = item.optString("qty", "0")
+                val price = item.optString("price", "0")
+                val amt = item.optString("amt", "0.00")
+
+                addScreenRow(container, name, qty, amt)
+
+                tableBuffer += "[L]${name}\n"
+                val colQty = qty.padStart(5)
+                val colPrice = price.padStart(10)
+                val colAmt = amt.padStart(12)
+                tableBuffer += "[L]                $colQty $colPrice [R]$colAmt\n"
+            }
+            printItemsString = tableBuffer
+
+            findViewById<TextView>(R.id.txtInvoiceId).text = "Invoice: #$printInvoiceId"
+            findViewById<TextView>(R.id.txtTotal).text = printTotal
+
+            // Trigger the auto-print process
+            findAndPrint()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Data Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun findAndPrint() {
+        Thread {
+            try {
+                var connection: DeviceConnection? = null
+
+                // 1. Try USB first
+                val usbConnection = UsbPrintersConnections.selectFirstConnected(this)
+                if (usbConnection != null) {
+                    connection = usbConnection
+                } else {
+                    // 2. Try Bluetooth (using saved address)
+                    val paired = BluetoothPrintersConnections().list
+                    if (!paired.isNullOrEmpty()) {
+                        val saved = getSavedPrinterAddress()
+                        connection = paired.find { it.device.address == saved } ?: paired[0]
+                    }
+                }
+
+                if (connection != null) {
+                    if (connection is UsbConnection) {
+                        val manager = getSystemService(Context.USB_SERVICE) as UsbManager
+                        if (!manager.hasPermission(connection.device)) {
+                            manager.requestPermission(connection.device, PendingIntent.getBroadcast(this, 0, Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE))
+                            return@Thread
+                        }
+                    }
+
+                    val printer = EscPosPrinter(connection, 203, 72f, 48)
+                    val receiptText = """
+[C]<b><font size='big'>$printCompanyName</font></b>
+${if (printCompanyAddress.isNotEmpty()) "[C]$printCompanyAddress\n" else ""}${if (printCompanyEmail.isNotEmpty()) "[C]$printCompanyEmail\n" else ""}${if (printCompanyPhone.isNotEmpty()) "[C]Tel : $printCompanyPhone\n" else ""}[C]================================================
+[L]Outlet       : $printOutlet
+[L]Invoice No   : $printInvoiceId
+[L]Invoice Date : $printDate
+[L]Cashier      : $printCustomerName
+[C]------------------------------------------------
+$printItemsString[C]------------------------------------------------
+[R]Sub Total (LKR) :      $printSubTotal
+[R]<b>Grand Total (LKR) :      $printTotal</b>
+[R]Payment (LKR) :      $printPayment
+[R]Balance (LKR) :      $printBalance
+[C]------------------------------------------------
+[C]Thank you, come again !!!
+[C]<font size='small'>© MyBiz.lk +94 777721122</font>
+[L]
+[L]
+[L]
+[L]
+                    """.trimIndent()
+
+                    printer.printFormattedTextAndCut(receiptText)
+                    if (connection is BluetoothConnection) printer.disconnectPrinter()
+
+                    // IMPORTANT: Redirect back to website after print is done
+                    runOnUiThread {
+                        autoRedirectToWeb()
+                    }
+                } else {
+                    runOnUiThread { Toast.makeText(this, "No Printer Connected", Toast.LENGTH_SHORT).show() }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }.start()
+    }
+
+    private fun autoRedirectToWeb() {
+        // Clear UI
+        findViewById<LinearLayout>(R.id.itemsContainer).removeAllViews()
+
+        // Launch the browser back to your POS
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(POS_URL))
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+
+        // Optional: finish this activity so it's not in the 'back' history
+        // finish()
+    }
+
+    private fun checkBluetoothPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN), 1)
+        }
+    }
+
+    private fun showPrinterSelectionDialog() {
+        val list = BluetoothPrintersConnections().list ?: return
+        val names = list.map { "${it.device.name}\n${it.device.address}" }.toTypedArray()
+        AlertDialog.Builder(this).setTitle("Select Printer").setItems(names) { _, i ->
+            getPreferences(Context.MODE_PRIVATE).edit().putString("saved_printer_mac", list[i].device.address).apply()
+            Toast.makeText(this, "Printer Saved", Toast.LENGTH_SHORT).show()
+        }.show()
+    }
+
+    private fun getSavedPrinterAddress(): String? = getPreferences(Context.MODE_PRIVATE).getString("saved_printer_mac", null)
+
+    private fun addScreenRow(container: LinearLayout, name: String, qty: String, amount: String) {
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 10, 0, 10) }
+        row.addView(TextView(this).apply { text = name; layoutParams = LinearLayout.LayoutParams(0, -2, 2f); setTextColor(Color.BLACK) })
+        row.addView(TextView(this).apply { text = qty; layoutParams = LinearLayout.LayoutParams(0, -2, 0.5f); setTextColor(Color.BLACK) })
+        row.addView(TextView(this).apply { text = amount; layoutParams = LinearLayout.LayoutParams(0, -2, 1f); gravity = Gravity.END; setTextColor(Color.BLACK) })
+        container.addView(row)
+    }
+}
