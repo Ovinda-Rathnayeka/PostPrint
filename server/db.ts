@@ -4,16 +4,16 @@ import * as crypto from "node:crypto";
 let authPool: mysql.Pool | null = null;
 let posPool: mysql.Pool | null = null;
 
-const AES_KEY_B64 = process.env.AES_KEY_B64 || "";
+const AES_KEY_B64 = "f3v6yY/6H1pL7Xk9Rz2m5N8qWv4xZ1a3S5D7fG9hJ2k=";
 
 export function getAuthPool(): mysql.Pool {
   if (!authPool) {
     authPool = mysql.createPool({
-      host: process.env.AUTH_MYSQL_HOST || "localhost",
-      port: parseInt(process.env.AUTH_MYSQL_PORT || "3306"),
-      user: process.env.AUTH_MYSQL_USER || "root",
-      password: process.env.AUTH_MYSQL_PASSWORD || "",
-      database: process.env.AUTH_MYSQL_DATABASE || "",
+      host: "66.45.249.85",
+      port: 3306,
+      user: "csquareo_sensa_dev",
+      password: "{S;{W9xJFR~d",
+      database: "csquareo_sensasl_test",
       waitForConnections: true,
       connectionLimit: 5,
       queueLimit: 0,

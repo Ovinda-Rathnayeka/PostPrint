@@ -17,11 +17,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const users = await authQuery(
-        "SELECT * FROM user_android WHERE email = ? AND password = ? LIMIT 1",
-        [email, password]
+        "SELECT * FROM user_android WHERE email = ? LIMIT 1",
+        [email]
       );
 
       if (users.length === 0) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      const storedPassword = decryptAesGcm(users[0].password);
+      if (storedPassword !== password) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
 
@@ -59,12 +64,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       return res.json({
         id: user.id,
-        username: user.name || user.email,
-        name: user.name || user.email,
-        title: user.title || "User",
-        post: user.post || "cashier",
-        branch: user.branch || "1",
-        userType: user.user_type || "user",
+        username: user.firstname || user.email,
+        name: user.firstname || user.email,
+        title: "Cashier",
+        post: "cashier",
+        branch: "1",
+        userType: "user",
         email: user.email,
       });
     } catch (error: any) {
