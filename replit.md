@@ -1,18 +1,42 @@
 # POS System - Restaurant Point of Sale
 
 ## Overview
-A tablet-optimized POS (Point of Sale) system built with Expo React Native and Express backend. Connects to an existing MySQL database (from PHP POS system) to manage restaurant operations including menu items, orders, billing, and payments. Features an all-in-one 3-column layout matching the PHP web POS system.
+A tablet-optimized POS (Point of Sale) system built with Expo React Native and Express backend. Uses a two-database architecture: an auth database for user login and dynamic POS database connections per user. Features an all-in-one 3-column layout matching the PHP web POS system.
 
 ## Architecture
 - **Frontend**: Expo React Native with file-based routing (Expo Router)
 - **Backend**: Express.js with MySQL connection (mysql2)
-- **Database**: External MySQL database at 74.50.67.3 (csquaref_villagebakerytest)
+- **Auth Database**: External MySQL at 66.45.249.85 (csquareo_sensasl_test) - stores user_android and db_connection tables
+- **POS Database**: Dynamically connected after login using decrypted credentials from db_connection table
+- **Encryption**: AES-GCM encryption for all sensitive data in auth DB (passwords, DB credentials)
 - **State Management**: React Context (AuthContext, CartContext) + React Query
-- **Auth**: Hardcoded admin/admin login (no database auth)
+- **Auth**: Email/password login via user_android table (passwords are AES-GCM encrypted)
 - **Layout**: All-in-one 3-column tablet layout (no tab navigation)
 
+## Authentication Flow
+1. User enters email/password on login screen
+2. Backend queries `user_android` table by email
+3. Stored password is decrypted (AES-GCM) and compared with input
+4. On match, `db_connection_id` from user record is used to look up `db_connection` table
+5. All db_connection fields (ip_address, username, password, database_name) are AES-GCM encrypted
+6. Decrypted credentials are used to create a dynamic MySQL pool for POS data
+7. All subsequent API calls use this dynamic POS database connection
+
+## AES-GCM Decryption
+- Base64 decode the encrypted string
+- First 12 bytes = nonce/IV
+- Remaining bytes = ciphertext + 16-byte auth tag
+- Fixed key (base64): stored in server/db.ts
+
+## Auth Database Tables
+### user_android
+- `id`, `firstname`, `email`, `password` (AES-GCM encrypted), `phone_number_company`, `db_connection_id`, `created_at`
+
+### db_connection
+- `id`, `ip_address` (encrypted), `username` (encrypted), `password` (encrypted), `database_name` (encrypted), `created_at`
+
 ## Key Features
-- Hardcoded admin/admin login credentials
+- Email/password login with encrypted credentials
 - 3-column all-in-one POS screen: left (categories), center (menu grid), right (billing/numpad)
 - Menu categories and items browsing with search
 - Categories sorted by `catorder` field (matching PHP system)
@@ -84,12 +108,9 @@ When the Invoice button is pressed, the backend creates entries in these tables:
 - `recipt` - Receipts
 - `monycolection` - Money collection with bankname, cardref
 
-## Environment Variables
-- `MYSQL_HOST` - MySQL server IP address
-- `MYSQL_PORT` - MySQL port (default: 3306)
-- `MYSQL_USER` - MySQL username
-- `MYSQL_PASSWORD` - MySQL password
-- `MYSQL_DATABASE` - MySQL database name
+## Database Configuration
+- Auth DB credentials are hardcoded in `server/db.ts` (66.45.249.85)
+- POS DB credentials are dynamically loaded from `db_connection` table after login (AES-GCM encrypted)
 
 ## Project Structure
 ```
