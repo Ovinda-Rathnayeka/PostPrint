@@ -12,7 +12,7 @@ import {
   Alert,
   Switch,
   Keyboard,
-  Linking,
+  StatusBar as RNStatusBar,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,6 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as NavigationBar from "expo-navigation-bar";
+import * as Print from "expo-print";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
@@ -70,6 +71,7 @@ export default function POSScreen() {
     if (Platform.OS === "android") {
       NavigationBar.setVisibilityAsync("hidden");
       NavigationBar.setBehaviorAsync("overlay-swipe");
+      RNStatusBar.setHidden(true);
     }
   }, []);
 
@@ -130,8 +132,7 @@ export default function POSScreen() {
     if (Platform.OS !== "web") Haptics.selectionAsync();
   }, [activeField, cashAmount, discountRate, cardAmount]);
 
-  const handlePay = async () => {
-    if (cartItems.length === 0) return;
+  const placeOrder = async () => {
     const effectiveCash = (payMethod === "Cash" && cashVal === 0) ? grandTotal : cashVal;
     if (payMethod === "Cash" && effectiveCash < grandTotal) {
       if (Platform.OS === "web") {
@@ -139,53 +140,87 @@ export default function POSScreen() {
       } else {
         Alert.alert("Insufficient Amount", "Cash amount must be equal to or greater than the total");
       }
-      return;
+      return null;
     }
 
+    const res = await apiRequest("POST", "/api/place-order", {
+      items: cartItems.map((i) => ({ code: i.code, name: i.name, price: i.price, qty: i.qty })),
+      total,
+      discount: discountAmt,
+      discountRate: discountPercent,
+      serviceCharge: serviceChargeOn,
+      paytype: payMethod,
+      cash: effectiveCash,
+      card: parseFloat(cardAmount) || 0,
+      cardRef,
+      bankName,
+      userId: user?.id || "1",
+      branch: user?.branch || "1",
+      customer: "counter",
+    });
+    const data = await res.json();
+    return data;
+  };
+
+  const afterOrderSuccess = (billNo: string) => {
+    setSuccessBill(billNo);
+    resetAll();
+    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/daily-summary"] });
+    if (isNative) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    setTimeout(() => setSuccessBill(null), 5000);
+  };
+
+  const buildReceiptHtml = (invoiceData: any) => {
+    const { company, invoice, items: invItems, summary } = invoiceData;
+    let itemsHtml = "";
+    for (const item of invItems) {
+      itemsHtml += `<tr><td style="text-align:left">${item.name}</td><td style="text-align:center">${item.qty}</td><td style="text-align:right">${item.price}</td><td style="text-align:right">${item.amt}</td></tr>`;
+    }
+    return `<html><head><meta name="viewport" content="width=80mm"><style>body{font-family:monospace;font-size:12px;margin:0;padding:4mm;width:72mm}table{width:100%;border-collapse:collapse}td{padding:1px 0}hr{border:none;border-top:1px dashed #000}.center{text-align:center}.right{text-align:right}.bold{font-weight:bold}.big{font-size:16px}</style></head><body><div class="center"><div class="bold big">${company?.name || ""}</div>${company?.address ? `<div>${company.address}</div>` : ""}${company?.email ? `<div>${company.email}</div>` : ""}${company?.phone ? `<div>Tel: ${company.phone}</div>` : ""}</div><hr/><div>Outlet: ${company?.branch || ""}</div><div>Invoice No: ${invoice?.id || ""}</div><div>Date: ${invoice?.date || ""} ${invoice?.time || ""}</div><div>Cashier: ${invoice?.cashier || ""}</div><hr/><table><tr class="bold"><td>Item</td><td style="text-align:center">Qty</td><td style="text-align:right">Price</td><td style="text-align:right">Amount</td></tr>${itemsHtml}</table><hr/><div class="right">Sub Total: ${summary?.subTotal || "0.00"}</div>${summary?.serviceCharge && summary.serviceCharge !== "0.00" ? `<div class="right">Service Charge: ${summary.serviceCharge}</div>` : ""}${summary?.discount && summary.discount !== "0.00" ? `<div class="right">Discount: ${summary.discount}</div>` : ""}<div class="right bold">Grand Total: ${summary?.grandTotal || "0.00"}</div><div class="right">Payment: ${summary?.payment || "0.00"}</div><div class="right">Balance: ${summary?.balance || "0.00"}</div><hr/><div class="center">Thank you, come again !!!</div><div class="center" style="font-size:10px">&copy; MyBiz.lk +94 777721122</div></body></html>`;
+  };
+
+  const handleInvoice = async () => {
+    if (cartItems.length === 0) return;
     setProcessing(true);
     try {
-      const res = await apiRequest("POST", "/api/place-order", {
-        items: cartItems.map((i) => ({ code: i.code, name: i.name, price: i.price, qty: i.qty })),
-        total,
-        discount: discountAmt,
-        discountRate: discountPercent,
-        serviceCharge: serviceChargeOn,
-        paytype: payMethod,
-        cash: effectiveCash,
-        card: parseFloat(cardAmount) || 0,
-        cardRef,
-        bankName,
-        userId: user?.id || "1",
-        branch: user?.branch || "1",
-        customer: "counter",
-      });
-      const data = await res.json();
-      setSuccessBill(data.billNo);
-      resetAll();
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-summary"] });
-      if (isNative) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      setTimeout(() => setSuccessBill(null), 5000);
+      const data = await placeOrder();
+      if (!data) { setProcessing(false); return; }
+      afterOrderSuccess(data.billNo);
 
-      if (Platform.OS !== "web") {
-        try {
-          const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
-          const invoiceRes = await fetch(invoiceUrl.toString());
-          if (invoiceRes.ok) {
-            const invoiceData = await invoiceRes.json();
-            const encoded = encodeURIComponent(JSON.stringify(invoiceData));
-            Linking.openURL(`ovipos://invoice_view?data=${encoded}`).catch(() => {});
-          }
-        } catch (printErr) {
-          console.log("Print (non-fatal):", printErr);
+      try {
+        const invoiceUrl = new URL(`/api/invoice-data/${data.billNo}?branch=${user?.branch || "1"}&username=${user?.username || "admin"}`, getApiUrl());
+        const invoiceRes = await fetch(invoiceUrl.toString());
+        if (invoiceRes.ok) {
+          const invoiceData = await invoiceRes.json();
+          const html = buildReceiptHtml(invoiceData);
+          await Print.printAsync({ html });
         }
+      } catch (printErr) {
+        console.log("Print (non-fatal):", printErr);
       }
     } catch (err: any) {
       const msg = err.message || "Failed to process payment";
       if (Platform.OS === "web") alert(msg);
       else Alert.alert("Payment Failed", msg);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleSaveOrder = async () => {
+    if (cartItems.length === 0) return;
+    setProcessing(true);
+    try {
+      const data = await placeOrder();
+      if (!data) { setProcessing(false); return; }
+      afterOrderSuccess(data.billNo);
+    } catch (err: any) {
+      const msg = err.message || "Failed to save order";
+      if (Platform.OS === "web") alert(msg);
+      else Alert.alert("Save Failed", msg);
     } finally {
       setProcessing(false);
     }
@@ -562,13 +597,23 @@ export default function POSScreen() {
               <Pressable style={styles.numKey} onPress={() => handleNumpadPress("6")}>
                 <Text style={styles.numKeyText}>6</Text>
               </Pressable>
-              <Pressable style={[styles.actionKey, { backgroundColor: "#5A6577" }]} onPress={() => { /* KOT */ }}>
-                <Ionicons name="print" size={18} color="#FFF" />
-                <Text style={styles.actionKeyText}>KOT</Text>
+              <Pressable
+                style={[styles.actionKey, { backgroundColor: "#E67E22" }]}
+                onPress={handleSaveOrder}
+                disabled={processing || cartItems.length === 0}
+              >
+                {processing ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <Ionicons name="save" size={18} color="#FFF" />
+                    <Text style={styles.actionKeyText}>Save</Text>
+                  </>
+                )}
               </Pressable>
               <Pressable
                 style={[styles.actionKey, { backgroundColor: Colors.light.primary }]}
-                onPress={handlePay}
+                onPress={handleInvoice}
                 disabled={processing || cartItems.length === 0}
               >
                 {processing ? (
