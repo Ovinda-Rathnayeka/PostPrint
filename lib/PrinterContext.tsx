@@ -1,10 +1,13 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from "react";
-import { Platform, Alert } from "react-native";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 let ThermalPrinter: any = null;
 try {
   ThermalPrinter = require("react-native-thermal-pos-printer");
 } catch (e) {}
+
+const SAVED_PRINTER_KEY = "@pos_saved_printer";
 
 interface PrinterDevice {
   deviceName: string;
@@ -94,6 +97,50 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
   const [scanning, setScanning] = useState(false);
   const printerAvailable = Platform.OS === "android" && ThermalPrinter !== null;
 
+  useEffect(() => {
+    loadSavedPrinter();
+  }, []);
+
+  const loadSavedPrinter = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(SAVED_PRINTER_KEY);
+      if (saved) {
+        const device: PrinterDevice = JSON.parse(saved);
+        if (printerAvailable) {
+          try {
+            const Printer = ThermalPrinter.default || ThermalPrinter;
+            await Printer.init();
+            if (device.type === "usb") {
+              await Printer.connectUsb();
+            } else {
+              await Printer.connectBluetooth(device.macAddress);
+            }
+            setConnectedPrinter(device);
+          } catch (err) {
+            console.log("Auto-reconnect failed:", err);
+            setConnectedPrinter(device);
+          }
+        } else {
+          setConnectedPrinter(device);
+        }
+      }
+    } catch (e) {
+      console.log("Load saved printer error:", e);
+    }
+  };
+
+  const savePrinter = async (device: PrinterDevice | null) => {
+    try {
+      if (device) {
+        await AsyncStorage.setItem(SAVED_PRINTER_KEY, JSON.stringify(device));
+      } else {
+        await AsyncStorage.removeItem(SAVED_PRINTER_KEY);
+      }
+    } catch (e) {
+      console.log("Save printer error:", e);
+    }
+  };
+
   const scanPrinters = useCallback(async () => {
     if (!printerAvailable) return;
     setScanning(true);
@@ -125,6 +172,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
         await Printer.connectBluetooth(device.macAddress);
       }
       setConnectedPrinter(device);
+      await savePrinter(device);
       return true;
     } catch (err: any) {
       console.log("Connect printer error:", err);
@@ -139,6 +187,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
       await Printer.disconnect();
     } catch (e) {}
     setConnectedPrinter(null);
+    await savePrinter(null);
   }, [printerAvailable]);
 
   const printReceipt = useCallback(async (invoiceData: any): Promise<boolean> => {
