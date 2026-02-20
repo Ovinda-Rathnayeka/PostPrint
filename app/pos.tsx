@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
+import * as NavigationBar from "expo-navigation-bar";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
@@ -65,6 +66,10 @@ export default function POSScreen() {
   useEffect(() => {
     if (isNative) {
       Keyboard.dismiss();
+    }
+    if (Platform.OS === "android") {
+      NavigationBar.setVisibilityAsync("hidden");
+      NavigationBar.setBehaviorAsync("overlay-swipe");
     }
   }, []);
 

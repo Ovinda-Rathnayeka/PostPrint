@@ -61,7 +61,7 @@ export default function RootLayout() {
           <KeyboardProvider>
             <AuthProvider>
               <CartProvider>
-                <StatusBar style="dark" />
+                <StatusBar style="dark" hidden={false} />
                 <RootLayoutNav />
               </CartProvider>
             </AuthProvider>
