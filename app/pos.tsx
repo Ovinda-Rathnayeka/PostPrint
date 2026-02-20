@@ -24,6 +24,7 @@ import * as Print from "expo-print";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
+import { usePrinter } from "@/lib/PrinterContext";
 import { getApiUrl, apiRequest, queryClient } from "@/lib/query-client";
 
 interface Category {
@@ -47,6 +48,8 @@ export default function POSScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const { items: cartItems, addItem, removeItem, updateQty, total, itemCount, clearCart } = useCart();
+  const { connectedPrinter, printerList, scanning, scanPrinters, connectPrinter, disconnectPrinter, printReceipt, printerAvailable } = usePrinter();
+  const [showPrinterModal, setShowPrinterModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchText, setSearchText] = useState("");
 
@@ -216,8 +219,14 @@ export default function POSScreen() {
         const invoiceRes = await fetch(invoiceUrl.toString());
         if (invoiceRes.ok) {
           const invoiceData = await invoiceRes.json();
-          const html = buildReceiptHtml(invoiceData);
-          await Print.printAsync({ html });
+          let printed = false;
+          if (connectedPrinter && printerAvailable) {
+            printed = await printReceipt(invoiceData);
+          }
+          if (!printed) {
+            const html = buildReceiptHtml(invoiceData);
+            await Print.printAsync({ html });
+          }
         }
         if (Platform.OS === "android") {
           NavigationBar.setVisibilityAsync("hidden");
@@ -729,14 +738,89 @@ export default function POSScreen() {
                 <Ionicons name="star" size={18} color="#FFF" />
                 <Text style={styles.actionKeyText}>Special</Text>
               </Pressable>
-              <Pressable style={[styles.actionKey, { backgroundColor: "#5A6577" }]}>
-                <Ionicons name="people" size={18} color="#FFF" />
-                <Text style={styles.actionKeyText}>Staff</Text>
+              <Pressable style={[styles.actionKey, { backgroundColor: connectedPrinter ? "#27AE60" : "#5A6577" }]} onPress={() => setShowPrinterModal(true)}>
+                <Ionicons name="print" size={18} color="#FFF" />
+                <Text style={styles.actionKeyText}>Printer</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </View>
+
+      {showPrinterModal && (
+        <View style={styles.printerModalOverlay}>
+          <View style={styles.printerModalBox}>
+            <View style={styles.printerModalHeader}>
+              <Text style={styles.printerModalTitle}>Printer Settings</Text>
+              <Pressable onPress={() => setShowPrinterModal(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </Pressable>
+            </View>
+
+            {connectedPrinter ? (
+              <View style={styles.printerConnectedBox}>
+                <Ionicons name="checkmark-circle" size={24} color="#27AE60" />
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={styles.printerConnectedName}>{connectedPrinter.deviceName}</Text>
+                  <Text style={styles.printerConnectedAddr}>{connectedPrinter.macAddress} ({connectedPrinter.type})</Text>
+                </View>
+                <Pressable style={styles.printerDisconnectBtn} onPress={disconnectPrinter}>
+                  <Text style={styles.printerDisconnectText}>Disconnect</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.printerNotConnected}>
+                <Ionicons name="print-outline" size={20} color="#999" />
+                <Text style={styles.printerNotConnectedText}>No printer connected</Text>
+              </View>
+            )}
+
+            <Pressable
+              style={[styles.printerScanBtn, scanning && { opacity: 0.6 }]}
+              onPress={scanPrinters}
+              disabled={scanning}
+            >
+              {scanning ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <>
+                  <Ionicons name="search" size={16} color="#FFF" />
+                  <Text style={styles.printerScanText}>Scan for Printers</Text>
+                </>
+              )}
+            </Pressable>
+
+            {!printerAvailable && (
+              <Text style={styles.printerWarning}>
+                Bluetooth/USB printing requires running on Android device. System print dialog will be used as fallback.
+              </Text>
+            )}
+
+            <ScrollView style={styles.printerListScroll}>
+              {printerList.map((device, idx) => (
+                <Pressable
+                  key={device.macAddress || idx}
+                  style={styles.printerDeviceRow}
+                  onPress={async () => {
+                    const ok = await connectPrinter(device);
+                    if (ok) setShowPrinterModal(false);
+                  }}
+                >
+                  <Ionicons name={device.type === "usb" ? "usb-portable" as any : "bluetooth"} size={20} color={Colors.light.primary} />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={styles.printerDeviceName}>{device.deviceName}</Text>
+                    <Text style={styles.printerDeviceAddr}>{device.macAddress}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#999" />
+                </Pressable>
+              ))}
+              {printerList.length === 0 && !scanning && (
+                <Text style={styles.printerEmptyText}>Tap "Scan for Printers" to find Bluetooth/USB printers</Text>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -1209,5 +1293,124 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.success,
     justifyContent: "center",
     alignItems: "center",
+  },
+  printerModalOverlay: {
+    position: "absolute",
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 200,
+  },
+  printerModalBox: {
+    width: 420,
+    maxHeight: 500,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 20,
+  },
+  printerModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  printerModalTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: "#333",
+  },
+  printerConnectedBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E8F5E9",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  printerConnectedName: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#333",
+  },
+  printerConnectedAddr: {
+    fontSize: 11,
+    color: "#777",
+    fontFamily: "Inter_400Regular",
+  },
+  printerDisconnectBtn: {
+    backgroundColor: Colors.light.danger,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  printerDisconnectText: {
+    color: "#FFF",
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+  },
+  printerNotConnected: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 12,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  printerNotConnectedText: {
+    fontSize: 13,
+    color: "#999",
+    fontFamily: "Inter_400Regular",
+  },
+  printerScanBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  printerScanText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+  },
+  printerWarning: {
+    fontSize: 11,
+    color: "#E67E22",
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    marginBottom: 8,
+    paddingHorizontal: 8,
+  },
+  printerListScroll: {
+    maxHeight: 200,
+  },
+  printerDeviceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE",
+  },
+  printerDeviceName: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    color: "#333",
+  },
+  printerDeviceAddr: {
+    fontSize: 11,
+    color: "#999",
+    fontFamily: "Inter_400Regular",
+  },
+  printerEmptyText: {
+    fontSize: 13,
+    color: "#999",
+    textAlign: "center",
+    paddingVertical: 20,
+    fontFamily: "Inter_400Regular",
   },
 });

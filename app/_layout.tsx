@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider } from "@/lib/AuthContext";
 import { CartProvider } from "@/lib/CartContext";
+import { PrinterProvider } from "@/lib/PrinterContext";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { StatusBar } from "expo-status-bar";
 
@@ -61,8 +62,10 @@ export default function RootLayout() {
           <KeyboardProvider>
             <AuthProvider>
               <CartProvider>
-                <StatusBar style="dark" hidden={false} />
-                <RootLayoutNav />
+                <PrinterProvider>
+                  <StatusBar style="dark" hidden={false} />
+                  <RootLayoutNav />
+                </PrinterProvider>
               </CartProvider>
             </AuthProvider>
           </KeyboardProvider>

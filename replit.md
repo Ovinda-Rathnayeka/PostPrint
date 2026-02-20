@@ -73,10 +73,13 @@ When the Invoice button is pressed, the backend creates entries in these tables:
 9. Stock deduction via FIFO from `stock_master` with cost tracking from `nista_stock`
 
 ## Print Integration
-- Uses `expo-print` for receipt printing (system print dialog on Android)
+- Primary: `react-native-thermal-pos-printer` for direct Bluetooth/USB thermal printing (no dialog)
+- Fallback: `expo-print` for system print dialog when thermal printer not connected
+- PrinterContext (lib/PrinterContext.tsx) manages printer connection state
+- Printer button on POS screen opens settings modal to scan/connect Bluetooth/USB printers
+- Receipt format: Compact EscPos-style with 48-char width, matching Kotlin format
 - GET `/api/invoice-data/:billNo` returns complete print data as JSON
-- HTML receipt generated from invoice data with thermal printer formatting (72mm width)
-- Invoice button: saves order to DB + prints receipt
+- Invoice button: saves order to DB + prints receipt (thermal if connected, system dialog fallback)
 - Save button: saves order to DB only (no print)
 - Full screen mode: hides Android navigation bar and status bar using expo-navigation-bar
 
