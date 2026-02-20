@@ -9,6 +9,7 @@ interface User {
   post: string;
   branch: string;
   userType: string;
+  email?: string;
 }
 
 interface AuthContextValue {

@@ -21,7 +21,7 @@ import * as Haptics from "expo-haptics";
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { user, isLoading, login } = useAuth();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [logging, setLogging] = useState(false);
@@ -34,14 +34,14 @@ export default function LoginScreen() {
   }, [isLoading, user]);
 
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      setError("Please enter username and password");
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter email and password");
       return;
     }
     setError("");
     setLogging(true);
     try {
-      const res = await apiRequest("POST", "/api/login", { username: username.trim(), password: password.trim() });
+      const res = await apiRequest("POST", "/api/login", { email: email.trim(), password: password.trim() });
       const data = await res.json();
       await login(data);
       if (Platform.OS !== "web") {
@@ -50,9 +50,9 @@ export default function LoginScreen() {
       router.replace("/pos");
     } catch (err: any) {
       const msg = err.message?.includes("401")
-        ? "Invalid username or password"
+        ? "Invalid email or password"
         : err.message?.includes("500")
-        ? "Cannot connect to database. Check MySQL settings."
+        ? "Cannot connect to database. Check settings."
         : "Login failed. Please try again.";
       setError(msg);
       if (Platform.OS !== "web") {
@@ -99,16 +99,17 @@ export default function LoginScreen() {
 
         <View style={styles.inputGroup}>
           <View style={styles.inputWrapper}>
-            <Ionicons name="person-outline" size={20} color={Colors.light.textSecondary} style={styles.inputIcon} />
+            <Ionicons name="mail-outline" size={20} color={Colors.light.textSecondary} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Username"
+              placeholder="Email"
               placeholderTextColor={Colors.light.textSecondary}
-              value={username}
-              onChangeText={setUsername}
+              value={email}
+              onChangeText={setEmail}
               autoCapitalize="none"
               autoCorrect={false}
-              testID="username-input"
+              keyboardType="email-address"
+              testID="email-input"
             />
           </View>
 

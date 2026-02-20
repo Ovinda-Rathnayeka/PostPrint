@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
 import * as net from "node:net";
-import { query, testConnection } from "./db";
+import { query, testConnection, authQuery, decryptAesGcm, setPosPool } from "./db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", async (_req: Request, res: Response) => {
@@ -11,25 +11,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/login", async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
-      if (!username || !password) {
-        return res.status(400).json({ error: "Username and password required" });
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
       }
-      if (username === "admin" && password === "admin") {
-        return res.json({
-          id: 1,
-          username: "admin",
-          name: "Admin",
-          title: "Administrator",
-          post: "admin",
-          branch: "1",
-          userType: "admin",
-        });
+
+      const users = await authQuery(
+        "SELECT * FROM user_android WHERE email = ? AND password = ? LIMIT 1",
+        [email, password]
+      );
+
+      if (users.length === 0) {
+        return res.status(401).json({ error: "Invalid email or password" });
       }
-      return res.status(401).json({ error: "Invalid credentials" });
+
+      const user = users[0];
+      const dbConnectionId = user.db_connection_id;
+
+      if (!dbConnectionId) {
+        return res.status(400).json({ error: "No database connection configured for this user" });
+      }
+
+      const dbConns = await authQuery(
+        "SELECT * FROM db_connection WHERE id = ? LIMIT 1",
+        [dbConnectionId]
+      );
+
+      if (dbConns.length === 0) {
+        return res.status(400).json({ error: "Database connection not found" });
+      }
+
+      const dbConn = dbConns[0];
+      const dbHost = decryptAesGcm(dbConn.ip_address);
+      const dbUser = decryptAesGcm(dbConn.username);
+      const dbPass = decryptAesGcm(dbConn.password);
+      const dbName = decryptAesGcm(dbConn.database_name);
+      const dbPort = dbConn.port ? parseInt(decryptAesGcm(dbConn.port)) || 3306 : 3306;
+
+      console.log(`Setting up POS DB connection: ${dbHost}:${dbPort} / ${dbName} (user: ${dbUser})`);
+
+      setPosPool(dbHost, dbPort, dbUser, dbPass, dbName);
+
+      const connected = await testConnection();
+      if (!connected) {
+        return res.status(500).json({ error: "Could not connect to POS database" });
+      }
+
+      return res.json({
+        id: user.id,
+        username: user.name || user.email,
+        name: user.name || user.email,
+        title: user.title || "User",
+        post: user.post || "cashier",
+        branch: user.branch || "1",
+        userType: user.user_type || "user",
+        email: user.email,
+      });
     } catch (error: any) {
       console.error("Login error:", error);
-      return res.status(500).json({ error: "Login failed. Please try again." });
+      return res.status(500).json({ error: "Login failed: " + (error.message || "Please try again.") });
     }
   });
 
