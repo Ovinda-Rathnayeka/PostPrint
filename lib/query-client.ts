@@ -9,7 +9,7 @@ export function getApiUrl(): string {
   let host = process.env.EXPO_PUBLIC_DOMAIN;
 
   if (!host) {
-    throw new Error("EXPO_PUBLIC_DOMAIN is not set");
+    host = "ab30906d-c96d-4b0d-8af7-4479e11c965e-00-21so2wboug7ag.worf.replit.dev:5000";
   }
 
   let url = new URL(`https://${host}`);
