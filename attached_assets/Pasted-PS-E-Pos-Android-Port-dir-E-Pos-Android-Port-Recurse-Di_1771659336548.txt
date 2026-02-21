@@ -1,0 +1,129 @@
+PS E:\Pos-Android-Port> dir E:\Pos-Android-Port -Recurse -Directory -Filter "pos-backend"
+PS E:\Pos-Android-Port> cd E:\Pos-Android-Port\Pos-Android-Port
+>> git init
+>> git add .
+>> git commit -m "POS backend"
+>> git branch -M main
+>> git remote add origin https://github.com/Ovinda-Rathnayeke/pos-backend.git
+>> git push -u origin main
+cd : Cannot find path 'E:\Pos-Android-Port\Pos-Android-Port' because it does not exist.
+At line:1 char:1
++ cd E:\Pos-Android-Port\Pos-Android-Port
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (E:\Pos-Android-Port\Pos-Android-Port:String) [Set-Locat 
+   ion], ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.SetLocationCommand
+
+Reinitialized existing Git repository in E:/Pos-Android-Port/.git/
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.replit', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Procfile', LF will be replaced by CRLF the next time Git touches it    
+warning: in the working copy of 'app.json', LF will be replaced by CRLF the next time Git touches it    
+warning: in the working copy of 'app/+native-intent.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/+not-found.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/_layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/index.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/order-detail.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/orders.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/pos.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'babel.config.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/ErrorBoundary.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/ErrorFallback.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/KeyboardAwareScrollViewCompat.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'constants/colors.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'drizzle.config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'eslint.config.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/AuthContext.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/CartContext.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/PrinterContext.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/query-client.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'metro.config.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'nixpacks.toml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'patches/expo-asset+12.0.12.patch', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'railway.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'replit.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/build.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/db.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/printer.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/routes.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/storage.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/templates/landing-page.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared/schema.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tsconfig.json', LF will be replaced by CRLF the next time Git touches it
+[main 0c478a6] POS backend
+ 69 files changed, 1 insertion(+)
+ create mode 100644 .local/state/replit/agent/.agent_state_06de11c724a136b4fffa20d6da21091083cc7de3.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_0e3d17e258dc3864e77b65d62132cae87b6d0c75.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_13f478cd175ebb6f918637b839c9aa8663825f36.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_1411fd7a100ce46e0edeb8c544d0ad634724654c.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_157344b5e1e089eef105a76ceb1eeac96174c734.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_17771646157baa22ef3aed6a3d99a5bb14249dc0.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_1dfbccb1ada0276aa617fbf6086a3948bc168d19.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_2390289ac90f6758066f70b1920390dff2993970.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_2b714882a151335d5b133df75c40401bb5ee5482.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_2c5e737b8bed38135cd78c62248d7f7f5c75c505.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_33efa96a4b184cc25e3b16391ad99bd7f57f8b0e.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_3770426fe0f6b37614b45931436cc1dd583c729e.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_3a1a10e565dc96f1a90ef5f924c934d191acd834.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_3e792744ff475cd1af6fa5ec289e340553e00e1b.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_4443a5681be23cf4218ae09c38a9e277f8f904dc.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_448e43fa4f32138e7cf212523c70389679afd771.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_4745334e2ba81fe7edaca478df50a1a40dad7ba8.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_4e854072ee3b4ce5856d2051c72dceff93ef53c8.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_50742f1d266b9fd3d75d55981b7f7393e6e4941a.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_55729ba4a486d50ca7fc48c1f4527da48d38ba7d.bin
+ create mode 100644 .local/state/replit/agent/.agent_state_5a3b1094761a89c5cff041bd61207a5d57a88b24.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_5d7eb7eccb746f5f26751ed9e8d30694e4e0b8a6.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_60b1fac430c7e89dbdd69581a5a953774863a8a9.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_660336dd7111758f4e9d3e99b5ed6d8444536244.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_665a533f1a036da6726a6f34116612598904210b.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_6fe3f2989caeb918ee35c3faefb8e82bb51b1a46.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_7b9ed019af28aa5a2bd8af7198572a55f2a8e518.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_7c3771fe4b49223cd088b5cfc484f256abb4dcf1.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_8ea21c737893a7dd32c3d93e478ea9ec8ac6e361.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_909599d8f10ff70ab5785f22b00f4b77c261409f.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_977dbc63bf08e5b29f837fcfe35cb783040f8cb7.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_97be60e26c3b82caffa3cf26a756e59208a30c52.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_a0879b00202395873f05b02af4284fa1fdef9632.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_a27c5a75a523cd2acb5ccabc2ca675295f0e89e4.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_a42f5b3550286631a08b78b6056832f633d261ad.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_a9bd1a0ca0b3bc6dc2e997039f3ec7958fce4957.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_b5e14e901b455006a74e03f9408ac72cde101bc4.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_b5e2d0ebd8b58a8191bb494d197a8079acd27e4f.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_b704c3e96262c91b9c610589167588344e8ee5a8.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_ba544337725c09107694d8099d4c8ac4b82a0f94.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_c053334ad69cfd6cea51b2c57c503f2b27b9c6e4.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_c1ad4c13feb282cbe16c146b954ee196178723c3.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_cb427653a3049b6c71b070e070931fcfd603906f.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_cecbfd30b0fd2ada932e5003470fb799a711fe62.bin
+ create mode 100644 .local/state/replit/agent/.agent_state_d0497efeab7e115e7ea61461f56c67f9dd7dd532.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_d23627c5485c46eeca363a28d5b81d076717e444.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_d2edec8b1a87f973ae9d47979c03b903a9fadb35.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_d305ce519205e0a931742690bebadbd403f8cbcf.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_d3918d0f8005b27ca87a245f847964bdd0ae308c.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_d8827a5d3b919bab24bdd35e1d101d8e8e8e7d9e.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_d9fa7b1f43f08cae75ed087b7cf562d7a63e4dcd.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_da80df46eeaf8cc2b654d7391b7744547cb38402.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_e0e01011c1d05c293fce4512bcb49def918c741f.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_e3a6ef31ed45043672a6822fbb23f29cdcb5266e.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_e491f7274ee64ebce4b994a96da84996f98e60b6.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_e9eca8d6e6bb062cafe90f8287acfddb9b7f0705.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_eb6b027d7f5ca608733ff280634391dad85a705f.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_ec2265e1824f26c8cc5337e269b68a956d44afb5.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_f0aaf1a25a198735432fb77b3d80f152feecdfc7.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_f0e48bb662acfd7ccd3d349090c6dcaea025ded2.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_f86fb12076bdb804f0c104ae9cd25f05c2a67437.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_fd4bcbdae5327e0879897d5f4e28ca0876f93662.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_ff31c0c9b2464cad9749be529c111e5934f9159a.bin 
+ create mode 100644 .local/state/replit/agent/.agent_state_main.bin
+ create mode 100644 .local/state/replit/agent/.latest.json
+ create mode 100644 .local/state/replit/agent/repl_state.bin
+ create mode 100644 .local/state/replit/log-query.db
+ create mode 100644 .local/state/replit/log-query.db-shm
+ create mode 100644 .local/state/replit/log-query.db-wal
+remote: Repository not found.
+fatal: repository 'https://github.com/Ovinda-Rathnayeke/pos-backend.git/' not found
+PS E:\Pos-Android-Port> 
