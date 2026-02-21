@@ -1,0 +1,110 @@
+cd E:\Pos-Android-Port\Pos-Android-Port\pos-backend
+>> tar -xzf pos-export.tar.gz
+>> git add .
+>> git commit -m "POS backend"
+>> git branch -M main
+>> git push -u origin main
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Procfile', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/+native-intent.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/+not-found.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/_layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/index.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/order-detail.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/orders.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/pos.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'babel.config.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/ErrorBoundary.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/ErrorFallback.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/KeyboardAwareScrollViewCompat.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'constants/colors.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'drizzle.config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'eslint.config.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/AuthContext.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/CartContext.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/PrinterContext.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/query-client.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'metro.config.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'nixpacks.toml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'patches/expo-asset+12.0.12.patch', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'railway.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'replit.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/build.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/db.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/printer.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/routes.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/storage.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/templates/landing-page.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared/schema.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tsconfig.json', LF will be replaced by CRLF the next time Git touches it
+[master (root-commit) 8b65e56] POS backend
+ 62 files changed, 52107 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 Procfile
+ create mode 100644 app.json
+ create mode 100644 app/+native-intent.tsx
+ create mode 100644 app/+not-found.tsx
+ create mode 100644 app/_layout.tsx
+ create mode 100644 app/index.tsx
+ create mode 100644 app/order-detail.tsx
+ create mode 100644 app/orders.tsx
+ create mode 100644 app/pos.tsx
+ create mode 100644 assets/images/android-icon-background.png
+ create mode 100644 assets/images/android-icon-foreground.png
+ create mode 100644 assets/images/android-icon-monochrome.png
+ create mode 100644 assets/images/favicon.png
+ create mode 100644 assets/images/icon.png
+ create mode 100644 assets/images/splash-icon.png
+ create mode 100644 attached_assets/Pasted--php-session-start-logUserName-SESSION-logUserName-Logi_1771489487498.txt
+ create mode 100644 attached_assets/Pasted--php-session-start-logUserName-SESSION-logUserName-Logi_1771489497325.txt
+ create mode 100644 attached_assets/Pasted--php-session-start-logUserName-SESSION-logUserName-Logi_1771490414946.txt
+ create mode 100644 attached_assets/Pasted--php-session-start-logUserName-SESSION-logUserName-Logi_1771490424191.txt
+ create mode 100644 attached_assets/Pasted--php-session-start-logUserName-SESSION-logUserName-Logi_1771491992122.txt
+ create mode 100644 attached_assets/Pasted--php-session-start-logUserName-SESSION-logUserName-Logi_1771493867406.txt
+ create mode 100644 attached_assets/Pasted--php-session-start-logUserName-SESSION-logUserName-Logi_1771493875312.txt
+ create mode 100644 attached_assets/Pasted--xml-version-1-0-encoding-utf-8-LinearLayout-xmlns-andr_1771558712567.txt
+ create mode 100644 attached_assets/Pasted-package-com-example-displaydetails-import-android-Manif_1771493982933.txt
+ create mode 100644 attached_assets/Pasted-package-com-example-displaydetails-import-android-Manif_1771494763634.txt
+ create mode 100644 attached_assets/Pasted-package-com-example-displaydetails-import-android-Manif_1771495441888.txt
+ create mode 100644 attached_assets/Pasted-package-com-example-displaydetails-import-android-Manif_1771496219568.txt
+ create mode 100644 attached_assets/Pasted-package-com-example-displaydetails-import-android-Manif_1771496382392.txt
+ create mode 100644 attached_assets/Pasted-package-com-example-displaydetails-import-android-Manif_1771558654471.txt
+ create mode 100644 attached_assets/content-1771558897979.md
+ create mode 100644 attached_assets/image_1771492929570.png
+ create mode 100644 attached_assets/image_1771558918049.png
+ create mode 100644 attached_assets/image_1771583762398.png
+ create mode 100644 babel.config.js
+ create mode 100644 components/ErrorBoundary.tsx
+ create mode 100644 components/ErrorFallback.tsx
+ create mode 100644 components/KeyboardAwareScrollViewCompat.tsx
+ create mode 100644 constants/colors.ts
+ create mode 100644 drizzle.config.ts
+ create mode 100644 eslint.config.js
+ create mode 100644 lib/AuthContext.tsx
+ create mode 100644 lib/CartContext.tsx
+ create mode 100644 lib/PrinterContext.tsx
+ create mode 100644 lib/query-client.ts
+ create mode 100644 metro.config.js
+ create mode 100644 nixpacks.toml
+ create mode 100644 package-lock.json
+ create mode 100644 package.json
+ create mode 100644 patches/expo-asset+12.0.12.patch
+ create mode 100644 pos-export.tar.gz
+ create mode 100644 railway.json
+ create mode 100644 replit.md
+ create mode 100644 scripts/build.js
+ create mode 100644 server/db.ts
+ create mode 100644 server/index.ts
+ create mode 100644 server/printer.ts
+ create mode 100644 server/routes.ts
+ create mode 100644 server/storage.ts
+ create mode 100644 server/templates/landing-page.html
+ create mode 100644 shared/schema.ts
+ create mode 100644 tsconfig.json
+remote: Repository not found.
+fatal: repository 'https://github.com/Ovinda-Rathnayeke/pos-backend.git/' not found
+PS E:\Pos-Android-Port\Pos-Android-Port\pos-backend> 
