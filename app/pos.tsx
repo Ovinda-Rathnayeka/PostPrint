@@ -110,7 +110,14 @@ export default function POSScreen() {
   const sc = serviceChargeOn ? (total * scPercent) / 100 : 0;
   const grandTotal = total + sc - discountAmt;
   const cashVal = parseFloat(cashAmount) || 0;
-  const balance = payMethod === "Cash" ? cashVal - grandTotal : 0;
+  const cardVal = parseFloat(cardAmount) || 0;
+  const balance = payMethod === "Cash" ? cashVal - grandTotal : payMethod === "CardandCash" ? (cashVal + cardVal) - grandTotal : 0;
+
+  useEffect(() => {
+    if (payMethod === "CardandCash" && cashVal > 0 && cashVal < grandTotal) {
+      setCardAmount((grandTotal - cashVal).toFixed(2));
+    }
+  }, [cashAmount, payMethod, grandTotal]);
 
   const NOTES = [5000, 2000, 1000, 500, 100, 50, 20, 10];
 
@@ -162,6 +169,19 @@ export default function POSScreen() {
         Alert.alert("Insufficient Amount", "Cash amount must be equal to or greater than the total");
       }
       return null;
+    }
+
+    if (payMethod === "CardandCash") {
+      const splitTotal = cashVal + cardVal;
+      if (splitTotal < grandTotal) {
+        const msg = "Cash + Card amount must be equal to or greater than the total";
+        if (Platform.OS === "web") {
+          alert(msg);
+        } else {
+          Alert.alert("Insufficient Amount", msg);
+        }
+        return null;
+      }
     }
 
     const res = await apiRequest("POST", "/api/place-order", {
@@ -281,14 +301,19 @@ export default function POSScreen() {
 
   const handleCancelOrder = () => {
     if (cartItems.length === 0) return;
+    const doCancel = () => {
+      resetAll();
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-summary"] });
+    };
     if (Platform.OS === "web") {
       if (confirm("Cancel current order?")) {
-        resetAll();
+        doCancel();
       }
     } else {
       Alert.alert("Cancel Order", "Are you sure you want to cancel?", [
         { text: "No", style: "cancel" },
-        { text: "Yes", style: "destructive", onPress: resetAll },
+        { text: "Yes", style: "destructive", onPress: doCancel },
       ]);
     }
   };
@@ -529,8 +554,8 @@ export default function POSScreen() {
                   <View style={styles.totalRow}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <Text style={styles.totalLabel}>Cash(LKR)</Text>
-                      <Pressable testID="toggle-notes" onPress={() => setShowNotes(!showNotes)} style={{ padding: 2 }}>
-                        <MaterialCommunityIcons name={showNotes ? "chevron-up" : "cash-multiple"} size={18} color={Colors.light.primaryDark} />
+                      <Pressable testID="toggle-notes" onPress={() => setShowNotes(true)} style={{ padding: 2 }}>
+                        <MaterialCommunityIcons name="cash-multiple" size={18} color={Colors.light.primaryDark} />
                       </Pressable>
                     </View>
                     <Pressable onPress={() => { setActiveField("cash"); if (isNative) Keyboard.dismiss(); }}>
@@ -546,23 +571,6 @@ export default function POSScreen() {
                       />
                     </Pressable>
                   </View>
-                  {showNotes && (
-                    <View style={styles.notesGrid}>
-                      {NOTES.map((note) => (
-                        <View key={note} style={styles.noteItem}>
-                          <Pressable testID={`note-minus-${note}`} style={styles.noteMinusBtn} onPress={() => handleNoteMinus(note)}>
-                            <Ionicons name="remove" size={12} color="#FFF" />
-                          </Pressable>
-                          <Pressable testID={`note-${note}`} style={styles.noteBtn} onPress={() => handleNotePress(note)}>
-                            <Text style={styles.noteBtnText}>{note >= 1000 ? `${note/1000}K` : note}</Text>
-                          </Pressable>
-                          <Pressable testID={`note-plus-${note}`} style={styles.notePlusBtn} onPress={() => handleNotePress(note)}>
-                            <Ionicons name="add" size={12} color="#FFF" />
-                          </Pressable>
-                        </View>
-                      ))}
-                    </View>
-                  )}
                 </View>
               )}
 
@@ -589,11 +597,11 @@ export default function POSScreen() {
               {(payMethod === "Card" || payMethod === "CardandCash") && (
                 <>
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>Bank</Text>
+                    <Text style={styles.totalLabel}>Card Last 4</Text>
                     <TextInput
                       style={styles.totalInput}
                       value={bankName}
-                      placeholder="Bank name"
+                      placeholder="Last 4 digits"
                       placeholderTextColor="#999"
                       onChangeText={setBankName}
                       showSoftInputOnFocus={false}
@@ -631,7 +639,7 @@ export default function POSScreen() {
               </View>
 
               {/* Balance */}
-              {payMethod === "Cash" && cashVal >= grandTotal && grandTotal > 0 && (
+              {((payMethod === "Cash" && cashVal >= grandTotal) || (payMethod === "CardandCash" && balance > 0)) && grandTotal > 0 && (
                 <View style={styles.totalRow}>
                   <Text style={[styles.totalLabel, { color: Colors.light.success }]}>Balance(LKR)</Text>
                   <TextInput
@@ -746,6 +754,41 @@ export default function POSScreen() {
           </View>
         </View>
       </View>
+
+      {showNotes && (
+        <View style={styles.printerModalOverlay}>
+          <View style={[styles.printerModalBox, { width: 360 }]}>
+            <View style={styles.printerModalHeader}>
+              <Text style={styles.printerModalTitle}>Cash Notes (LKR)</Text>
+              <Pressable onPress={() => setShowNotes(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </Pressable>
+            </View>
+            <View style={styles.cashNotesCurrentRow}>
+              <Text style={styles.cashNotesCurrentLabel}>Cash Amount:</Text>
+              <Text style={styles.cashNotesCurrentValue}>LKR {cashVal.toFixed(2)}</Text>
+            </View>
+            <View style={styles.cashNotesGrid}>
+              {NOTES.map((note) => (
+                <View key={note} style={styles.cashNoteItem}>
+                  <Pressable testID={`note-minus-${note}`} style={styles.cashNoteMinusBtn} onPress={() => handleNoteMinus(note)}>
+                    <Ionicons name="remove" size={16} color="#FFF" />
+                  </Pressable>
+                  <View style={styles.cashNoteLabel}>
+                    <Text style={styles.cashNoteLabelText}>{note >= 1000 ? `${note / 1000}K` : note}</Text>
+                  </View>
+                  <Pressable testID={`note-plus-${note}`} style={styles.cashNotePlusBtn} onPress={() => handleNotePress(note)}>
+                    <Ionicons name="add" size={16} color="#FFF" />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+            <Pressable style={styles.cashNotesCloseBtn} onPress={() => setShowNotes(false)}>
+              <Text style={styles.cashNotesCloseBtnText}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {showPrinterModal && (
         <View style={styles.printerModalOverlay}>
@@ -1268,48 +1311,79 @@ const styles = StyleSheet.create({
     color: "#FFF",
   },
 
-  notesGrid: {
+  cashNotesCurrentRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#E8F5E9",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  cashNotesCurrentLabel: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    color: "#555",
+  },
+  cashNotesCurrentValue: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: Colors.light.primaryDark,
+  },
+  cashNotesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 3,
-    marginTop: 4,
-    marginBottom: 4,
+    gap: 10,
+    justifyContent: "center",
+    marginBottom: 16,
   },
-  noteItem: {
+  cashNoteItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 1,
+    gap: 2,
+    width: "45%",
   },
-  noteMinusBtn: {
-    width: 20,
-    height: 24,
-    borderRadius: 3,
+  cashNoteMinusBtn: {
+    width: 32,
+    height: 36,
+    borderRadius: 6,
     backgroundColor: Colors.light.danger,
     justifyContent: "center",
     alignItems: "center",
   },
-  noteBtn: {
-    height: 24,
-    paddingHorizontal: 6,
-    borderRadius: 3,
+  cashNoteLabel: {
+    flex: 1,
+    height: 36,
+    borderRadius: 6,
     backgroundColor: "#E0F7FA",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#B2DFDB",
   },
-  noteBtnText: {
-    fontSize: 11,
+  cashNoteLabelText: {
+    fontSize: 14,
     fontFamily: "Inter_700Bold",
     color: Colors.light.primaryDark,
   },
-  notePlusBtn: {
-    width: 20,
-    height: 24,
-    borderRadius: 3,
+  cashNotePlusBtn: {
+    width: 32,
+    height: 36,
+    borderRadius: 6,
     backgroundColor: Colors.light.success,
     justifyContent: "center",
     alignItems: "center",
+  },
+  cashNotesCloseBtn: {
+    backgroundColor: Colors.light.primary,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  cashNotesCloseBtnText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
   },
   printerModalOverlay: {
     position: "absolute",
