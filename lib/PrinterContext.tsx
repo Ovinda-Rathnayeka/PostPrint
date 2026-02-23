@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { Platform, PermissionsAndroid, Alert } from "react-native";
+import { Platform, PermissionsAndroid, Alert, NativeModules } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 let ReactNativePosPrinter: any = null;
@@ -61,7 +61,6 @@ function buildReceiptText(data: any): string {
   if (data.company?.email) r += `[C]${data.company.email}\n`;
   if (data.company?.phone) r += `[C]Tel : ${data.company.phone}\n`;
   r += `[C]${sep}\n`;
-
   r += `[L]Outlet       : ${data.company?.branch || ""}\n`;
   r += `[L]Invoice No   : ${data.invoice?.id || ""}\n`;
   r += `[L]Invoice Date : ${data.invoice?.date || ""}\n`;
@@ -75,14 +74,6 @@ function buildReceiptText(data: any): string {
 
   r += `[C]${sep2}\n`;
   r += `[R]Sub Total (LKR) :      ${data.summary?.subTotal || "0.00"}\n`;
-
-  if (data.summary?.serviceCharge && data.summary.serviceCharge !== "0.00") {
-    r += `[R]Service Charge (LKR) :      ${data.summary.serviceCharge}\n`;
-  }
-  if (data.summary?.discount && data.summary.discount !== "0.00") {
-    r += `[R]Discount (LKR) :      ${data.summary.discount}\n`;
-  }
-
   r += `[R]<b>Grand Total (LKR) :      ${data.summary?.grandTotal || "0.00"}</b>\n`;
   r += `[R]Payment (LKR) :      ${data.summary?.payment || "0.00"}\n`;
   r += `[R]Balance (LKR) :      ${data.summary?.balance || "0.00"}\n`;
@@ -132,10 +123,6 @@ async function requestBluetoothPermissions(): Promise<boolean> {
   }
 }
 
-async function doConnect(address: string, type: "bluetooth" | "usb"): Promise<void> {
-  await ReactNativePosPrinter.connectPrinter(address, { type: type === "usb" ? "USB" : "BLUETOOTH" });
-}
-
 export function PrinterProvider({ children }: { children: React.ReactNode }) {
   const [connectedPrinter, setConnectedPrinter] = useState<PrinterDevice | null>(null);
   const [printerList, setPrinterList] = useState<PrinterDevice[]>([]);
@@ -152,10 +139,10 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         const device: PrinterDevice = JSON.parse(saved);
         setConnectedPrinter(device);
-        if (printerAvailable) {
+        if (printerAvailable && device.type === "bluetooth") {
           try {
             await ReactNativePosPrinter.init();
-            await doConnect(device.macAddress, device.type);
+            await ReactNativePosPrinter.connectPrinter(device.macAddress, { type: "BLUETOOTH" });
           } catch (err) {
             console.log("Auto-reconnect failed (will retry on print):", err);
           }
@@ -197,7 +184,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
         let name = "Unknown";
         let address = "";
         let rawType = "BLUETOOTH";
-        
+
         if (typeof d.getName === "function") {
           name = d.getName() || "Unknown";
           address = d.getAddress() || "";
@@ -212,7 +199,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
           address = d.address || d.macAddress || "";
           rawType = d.type || "BLUETOOTH";
         }
-        
+
         const pType = (rawType.toUpperCase() === "USB") ? "usb" as const : "bluetooth" as const;
         if (address) {
           mapped.push({ deviceName: name, macAddress: address, type: pType });
@@ -220,7 +207,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
       }
       setPrinterList(mapped);
       if (mapped.length === 0) {
-        Alert.alert("No Printers Found", "Make sure your Bluetooth printer is turned on and paired in Android Bluetooth settings, or your USB printer is connected.");
+        Alert.alert("No Printers Found", "Make sure your Bluetooth printer is turned on and paired in Android Bluetooth settings.\n\nNote: USB printers are not supported by this printer module. Please use Bluetooth connection.");
       }
     } catch (err: any) {
       console.log("Scan printers error:", err);
@@ -233,9 +220,13 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
 
   const connectPrinter = useCallback(async (device: PrinterDevice): Promise<boolean> => {
     if (!printerAvailable) return false;
+    if (device.type === "usb") {
+      Alert.alert("USB Not Supported", "This printer module only supports Bluetooth connection. Please connect your printer via Bluetooth instead.");
+      return false;
+    }
     try {
       await ReactNativePosPrinter.init();
-      await doConnect(device.macAddress, device.type);
+      await ReactNativePosPrinter.connectPrinter(device.macAddress, { type: "BLUETOOTH" });
       setConnectedPrinter(device);
       await savePrinter(device);
       Alert.alert("Connected", `Successfully connected to ${device.deviceName}`);
@@ -265,15 +256,27 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
         const connected = await ReactNativePosPrinter.isConnected();
         if (!connected) {
           await ReactNativePosPrinter.init();
-          await doConnect(connectedPrinter.macAddress, connectedPrinter.type);
+          await ReactNativePosPrinter.connectPrinter(connectedPrinter.macAddress, { type: "BLUETOOTH" });
         }
       } catch (reconnectErr) {
         await ReactNativePosPrinter.init();
-        await doConnect(connectedPrinter.macAddress, connectedPrinter.type);
+        await ReactNativePosPrinter.connectPrinter(connectedPrinter.macAddress, { type: "BLUETOOTH" });
       }
 
       const receiptText = buildReceiptText(invoiceData);
       await ReactNativePosPrinter.printText(receiptText);
+
+      try {
+        await ReactNativePosPrinter.cutPaper();
+      } catch (cutErr) {
+        console.log("Cut paper not supported or failed:", cutErr);
+        try {
+          await ReactNativePosPrinter.sendRawCommand([0x1D, 0x56, 0x00]);
+        } catch (rawCutErr) {
+          console.log("Raw cut command also failed:", rawCutErr);
+        }
+      }
+
       return true;
     } catch (err: any) {
       console.log("Print receipt error:", err);
