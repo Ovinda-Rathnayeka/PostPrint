@@ -153,22 +153,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { items, total, discount, discountRate, serviceCharge, paytype, cash, card, cardRef, bankName, userId, branch, customer } = req.body;
 
-      const maxResult = await query(
-        "SELECT MAX(id) as maxId FROM nista_bill_summary WHERE branch = ? AND (invoiceType='inhouse' OR invoiceType='onlineorders') AND billNo LIKE 'CT%'",
+      const lastBillResult = await query(
+        "SELECT billNo FROM nista_bill_summary WHERE branch = ? AND billNo LIKE 'CT%' ORDER BY CAST(SUBSTRING(billNo, 3) AS UNSIGNED) DESC LIMIT 1",
         [branch]
       );
 
       let billno = "CT1001";
-      if (maxResult[0]?.maxId) {
-        const billResult = await query(
-          "SELECT billNo FROM nista_bill_summary WHERE id = ?",
-          [maxResult[0].maxId]
-        );
-        if (billResult.length > 0) {
-          const lastBill = billResult[0].billNo;
-          const num = parseInt(lastBill.substring(2)) + 1;
-          billno = "CT" + num;
-        }
+      if (lastBillResult.length > 0 && lastBillResult[0].billNo) {
+        const lastBill = lastBillResult[0].billNo;
+        const num = parseInt(lastBill.substring(2)) + 1;
+        billno = "CT" + num;
       }
 
       const now = new Date();

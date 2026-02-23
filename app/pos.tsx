@@ -42,7 +42,7 @@ interface MenuItem {
 }
 
 type PaymentMethod = "Cash" | "Card" | "CardandCash";
-type ActiveField = "cash" | "discount" | "cardAmount" | null;
+type ActiveField = "cash" | "discount" | "cardAmount" | "cardLast4" | "cardRef" | null;
 
 export default function POSScreen() {
   const insets = useSafeAreaInsets();
@@ -145,9 +145,13 @@ export default function POSScreen() {
     if (!activeField) return;
     const setter = activeField === "cash" ? setCashAmount :
                    activeField === "discount" ? setDiscountRate :
+                   activeField === "cardLast4" ? setBankName :
+                   activeField === "cardRef" ? setCardRef :
                    setCardAmount;
     const currentVal = activeField === "cash" ? cashAmount :
                        activeField === "discount" ? discountRate :
+                       activeField === "cardLast4" ? bankName :
+                       activeField === "cardRef" ? cardRef :
                        cardAmount;
 
     if (key === "Delete") {
@@ -155,10 +159,11 @@ export default function POSScreen() {
     } else if (key === ".") {
       if (!currentVal.includes(".")) setter(currentVal + ".");
     } else {
+      if (activeField === "cardLast4" && currentVal.length >= 4) return;
       setter(currentVal + key);
     }
     if (Platform.OS !== "web") Haptics.selectionAsync();
-  }, [activeField, cashAmount, discountRate, cardAmount]);
+  }, [activeField, cashAmount, discountRate, cardAmount, bankName, cardRef]);
 
   const placeOrder = async () => {
     const effectiveCash = (payMethod === "Cash" && cashVal === 0) ? grandTotal : cashVal;
@@ -593,30 +598,39 @@ export default function POSScreen() {
                 </View>
               )}
 
-              {/* Bank Name & Card Ref for card payments */}
+              {/* Card Last 4 & Card Ref for card payments */}
               {(payMethod === "Card" || payMethod === "CardandCash") && (
                 <>
                   <View style={styles.totalRow}>
                     <Text style={styles.totalLabel}>Card Last 4</Text>
-                    <TextInput
-                      style={styles.totalInput}
-                      value={bankName}
-                      placeholder="Last 4 digits"
-                      placeholderTextColor="#999"
-                      onChangeText={setBankName}
-                      showSoftInputOnFocus={false}
-                    />
+                    <Pressable onPress={() => { setActiveField("cardLast4"); if (isNative) Keyboard.dismiss(); }}>
+                      <TextInput
+                        style={[styles.totalInput, activeField === "cardLast4" && styles.totalInputActive]}
+                        value={bankName}
+                        placeholder="Last 4 digits"
+                        placeholderTextColor="#999"
+                        onChangeText={(t) => { if (t.length <= 4) setBankName(t); }}
+                        onFocus={() => { setActiveField("cardLast4"); if (isNative) Keyboard.dismiss(); }}
+                        showSoftInputOnFocus={false}
+                        keyboardType="numeric"
+                        maxLength={4}
+                      />
+                    </Pressable>
                   </View>
                   <View style={styles.totalRow}>
                     <Text style={styles.totalLabel}>Card Ref</Text>
-                    <TextInput
-                      style={styles.totalInput}
-                      value={cardRef}
-                      placeholder="Reference"
-                      placeholderTextColor="#999"
-                      onChangeText={setCardRef}
-                      showSoftInputOnFocus={false}
-                    />
+                    <Pressable onPress={() => { setActiveField("cardRef"); if (isNative) Keyboard.dismiss(); }}>
+                      <TextInput
+                        style={[styles.totalInput, activeField === "cardRef" && styles.totalInputActive]}
+                        value={cardRef}
+                        placeholder="Reference"
+                        placeholderTextColor="#999"
+                        onChangeText={setCardRef}
+                        onFocus={() => { setActiveField("cardRef"); if (isNative) Keyboard.dismiss(); }}
+                        showSoftInputOnFocus={false}
+                        keyboardType="numeric"
+                      />
+                    </Pressable>
                   </View>
                 </>
               )}
