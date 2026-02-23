@@ -2,8 +2,6 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
 import * as net from "node:net";
 import { query, testConnection, authQuery, decryptAesGcm, setPosPool } from "./db";
-import { printToThermal } from "./printer";
-
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", async (_req: Request, res: Response) => {
     const connected = await testConnection();
@@ -503,87 +501,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Invoice data error:", error);
       return res.status(500).json({ error: "Failed to fetch invoice data" });
-    }
-  });
-
-  app.post("/api/print-receipt", async (req: Request, res: Response) => {
-    try {
-      const { billNo, branch, username } = req.body;
-      if (!billNo) {
-        return res.status(400).json({ error: "billNo is required" });
-      }
-
-      const printerIp = process.env.PRINTER_IP;
-      if (!printerIp) {
-        return res.status(400).json({ error: "Printer IP not configured" });
-      }
-      const printerPort = parseInt(process.env.PRINTER_PORT || "9100", 10);
-
-      const companyRows = await query(
-        "SELECT * FROM companydetails WHERE branchId = ? LIMIT 1",
-        [branch || "1"]
-      );
-      const company = companyRows.length > 0 ? companyRows[0] : {};
-
-      const branchRows = await query(
-        "SELECT branchname FROM branch WHERE id = ? LIMIT 1",
-        [branch || "1"]
-      );
-      const branchName = branchRows.length > 0 ? branchRows[0].branchname : "";
-
-      const summaryRows = await query(
-        "SELECT * FROM nista_bill_summary WHERE billNo = ? LIMIT 1",
-        [billNo]
-      );
-      const invoice = summaryRows.length > 0 ? summaryRows[0] : null;
-      if (!invoice) {
-        return res.status(404).json({ error: "Invoice not found" });
-      }
-
-      const itemRows = await query(
-        "SELECT nbm.quantity, nbm.uprice, nbm.amount, nbm.icode, mm.menuname FROM nista_bill_master nbm LEFT JOIN menu_master mm ON nbm.icode = mm.menucode WHERE nbm.billno = ? GROUP BY mm.menucode",
-        [billNo]
-      );
-
-      const items = itemRows.map((row: any) => ({
-        name: row.menuname || "",
-        qty: String(row.quantity),
-        price: String(row.uprice),
-        amt: String(row.amount),
-      }));
-
-      const payment = parseFloat(invoice.subTotal) + parseFloat(invoice.paybalense || 0);
-
-      const printData = {
-        company: {
-          name: company.company || "",
-          address: company.adress || "",
-          email: company.email || "",
-          phone: company.tp || "",
-          branch: branchName,
-        },
-        invoice: {
-          id: billNo,
-          date: invoice.billDate || "",
-          time: invoice.billTime || "",
-          cashier: username || "admin",
-        },
-        items,
-        summary: {
-          subTotal: String(invoice.amount || "0.00"),
-          serviceCharge: String(invoice.servicecharge || "0.00"),
-          discount: String(invoice.discount || "0.00"),
-          grandTotal: String(invoice.subTotal || "0.00"),
-          payment: String(payment),
-          balance: String(invoice.paybalense || "0.00"),
-        },
-      };
-
-      await printToThermal(printerIp, printerPort, printData);
-      return res.json({ success: true, message: "Receipt printed successfully" });
-    } catch (error: any) {
-      console.error("Print receipt error:", error);
-      return res.status(500).json({ error: error.message || "Failed to print receipt" });
     }
   });
 
