@@ -81,12 +81,17 @@ function buildReceiptText(data: any): string {
 
   r += `[C]${sep2}\n`;
   r += `[R]Sub Total (LKR) :      ${data.summary?.subTotal || "0.00"}\n`;
+  const scAmt = parseFloat(data.summary?.serviceCharge || "0");
+  if (scAmt > 0) r += `[R]Service Charge  :      ${scAmt.toFixed(2)}\n`;
+  const discAmt = parseFloat(data.summary?.discount || "0");
+  if (discAmt > 0) r += `[R]Discount        :     -${discAmt.toFixed(2)}\n`;
   r += `[R]<b>Grand Total (LKR) :      ${data.summary?.grandTotal || "0.00"}</b>\n`;
   r += `[R]Payment (LKR) :      ${data.summary?.payment || "0.00"}\n`;
-  r += `[R]Balance (LKR) :      ${data.summary?.balance || "0.00"}\n`;
+  const balAmt = parseFloat(data.summary?.balance || "0");
+  if (balAmt > 0) r += `[R]Balance (LKR) :      ${balAmt.toFixed(2)}\n`;
   r += `[C]${sep2}\n`;
   r += `[C]Thank you, come again !!!\n`;
-  r += `[C]<font size='small'>© MyBiz.lk +94 777721122</font>\n`;
+  r += `[C]<font size='small'>Software By MyBiz.lk +94 777721122</font>\n`;
   r += `[L]\n[L]\n[L]\n[L]\n`;
 
   return r;
