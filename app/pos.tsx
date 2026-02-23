@@ -48,7 +48,7 @@ export default function POSScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const { items: cartItems, addItem, removeItem, updateQty, total, itemCount, clearCart } = useCart();
-  const { connectedPrinter, printerList, scanning, scanPrinters, connectPrinter, disconnectPrinter, printReceipt, printerAvailable } = usePrinter();
+  const { connectedPrinter, printerList, scanning, scanPrinters, scanUsbPrinters, connectPrinter, disconnectPrinter, printReceipt, printerAvailable, usbAvailable } = usePrinter();
   const [showPrinterModal, setShowPrinterModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchText, setSearchText] = useState("");
@@ -775,24 +775,41 @@ export default function POSScreen() {
               </View>
             )}
 
-            <Pressable
-              style={[styles.printerScanBtn, scanning && { opacity: 0.6 }]}
-              onPress={scanPrinters}
-              disabled={scanning}
-            >
-              {scanning ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : (
-                <>
-                  <Ionicons name="search" size={16} color="#FFF" />
-                  <Text style={styles.printerScanText}>Scan for Printers</Text>
-                </>
-              )}
-            </Pressable>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable
+                style={[styles.printerScanBtn, { flex: 1 }, scanning && { opacity: 0.6 }]}
+                onPress={scanPrinters}
+                disabled={scanning}
+              >
+                {scanning ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <Ionicons name="bluetooth" size={16} color="#FFF" />
+                    <Text style={styles.printerScanText}>Scan Bluetooth</Text>
+                  </>
+                )}
+              </Pressable>
 
-            {!printerAvailable && (
+              <Pressable
+                style={[styles.printerScanBtn, { flex: 1, backgroundColor: "#FF8C00" }, scanning && { opacity: 0.6 }]}
+                onPress={scanUsbPrinters}
+                disabled={scanning}
+              >
+                {scanning ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <Ionicons name="hardware-chip-outline" size={16} color="#FFF" />
+                    <Text style={styles.printerScanText}>Scan USB</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+
+            {!printerAvailable && !usbAvailable && (
               <Text style={styles.printerWarning}>
-                Bluetooth/USB printing requires running on Android device. System print dialog will be used as fallback.
+                Bluetooth/USB printing requires running on Android device with native build.
               </Text>
             )}
 
@@ -806,7 +823,7 @@ export default function POSScreen() {
                     if (ok) setShowPrinterModal(false);
                   }}
                 >
-                  <Ionicons name={device.type === "usb" ? "usb-portable" as any : "bluetooth"} size={20} color={Colors.light.primary} />
+                  <Ionicons name={device.type === "usb" ? "hardware-chip-outline" : "bluetooth"} size={20} color={device.type === "usb" ? "#FF8C00" : Colors.light.primary} />
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text style={styles.printerDeviceName}>{device.deviceName}</Text>
                     <Text style={styles.printerDeviceAddr}>{device.macAddress}</Text>
@@ -815,7 +832,7 @@ export default function POSScreen() {
                 </Pressable>
               ))}
               {printerList.length === 0 && !scanning && (
-                <Text style={styles.printerEmptyText}>Tap "Scan for Printers" to find Bluetooth/USB printers</Text>
+                <Text style={styles.printerEmptyText}>Tap "Scan Bluetooth" or "Scan USB" to find printers</Text>
               )}
             </ScrollView>
           </View>
