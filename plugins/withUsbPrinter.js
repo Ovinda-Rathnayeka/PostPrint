@@ -26,12 +26,20 @@ function withJitpackRepo(config) {
     if (config.modResults.contents.includes("jitpack.io")) {
       return config;
     }
-    config.modResults.contents = config.modResults.contents.replace(
-      /allprojects\s*\{\s*repositories\s*\{/,
-      `allprojects {
-    repositories {
-        maven { url 'https://jitpack.io' }`
-    );
+    let modified = config.modResults.contents;
+    const jitpackLine = `        maven { url 'https://jitpack.io' }`;
+
+    const allProjectsMatch = modified.match(/allprojects\s*\{\s*repositories\s*\{/);
+    if (allProjectsMatch) {
+      modified = modified.replace(
+        /allprojects\s*\{\s*repositories\s*\{/,
+        `allprojects {\n    repositories {\n${jitpackLine}`
+      );
+    } else {
+      modified += `\nallprojects {\n    repositories {\n${jitpackLine}\n    }\n}\n`;
+    }
+
+    config.modResults.contents = modified;
     return config;
   });
 }
@@ -306,19 +314,54 @@ function withUsbPrinterRegistration(config) {
     let modified = contents;
 
     if (!modified.includes("import com.myapp.usbprinter.UsbPrinterPackage")) {
-      modified = modified.replace(
+      const importPatterns = [
         /import com\.facebook\.react\.defaults\.DefaultReactNativeHost/,
-        `import com.facebook.react.defaults.DefaultReactNativeHost
-import com.myapp.usbprinter.UsbPrinterPackage`
-      );
+        /import com\.facebook\.react\.ReactApplication/,
+        /import android\.app\.Application/,
+      ];
+      let importAdded = false;
+      for (const pat of importPatterns) {
+        if (pat.test(modified)) {
+          modified = modified.replace(
+            pat,
+            (match) => `${match}\nimport com.myapp.usbprinter.UsbPrinterPackage`
+          );
+          importAdded = true;
+          break;
+        }
+      }
+      if (!importAdded) {
+        modified = `import com.myapp.usbprinter.UsbPrinterPackage\n${modified}`;
+      }
     }
 
-    modified = modified.replace(
-      /override fun getPackages\(\): List<ReactPackage> \{[^}]*return PackageList\(this\)\.packages\.apply \{/,
-      `override fun getPackages(): List<ReactPackage> {
-            return PackageList(this).packages.apply {
-              add(UsbPrinterPackage())`
-    );
+    const patterns = [
+      {
+        regex: /(override\s+fun\s+getPackages\s*\(\s*\)\s*:\s*List<ReactPackage>\s*=\s*\n?\s*PackageList\s*\(\s*this\s*\)\s*\.packages\s*\.apply\s*\{)/,
+        replacement: (match) => `${match}\n              add(UsbPrinterPackage())`
+      },
+      {
+        regex: /(override\s+fun\s+getPackages\s*\(\s*\)\s*:\s*List<ReactPackage>\s*\{[^}]*return\s+PackageList\s*\(\s*this\s*\)\s*\.packages\s*\.apply\s*\{)/,
+        replacement: (match) => `${match}\n              add(UsbPrinterPackage())`
+      },
+      {
+        regex: /(PackageList\s*\(\s*this\s*\)\s*\.packages\s*\.apply\s*\{)/,
+        replacement: (match) => `${match}\n              add(UsbPrinterPackage())`
+      }
+    ];
+
+    let patternMatched = false;
+    for (const p of patterns) {
+      if (p.regex.test(modified)) {
+        modified = modified.replace(p.regex, p.replacement);
+        patternMatched = true;
+        break;
+      }
+    }
+
+    if (!patternMatched) {
+      console.warn("[withUsbPrinter] Could not find getPackages pattern in MainApplication. USB module may not be registered.");
+    }
 
     config.modResults.contents = modified;
     return config;
