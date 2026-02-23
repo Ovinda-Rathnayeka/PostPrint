@@ -2,10 +2,13 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { Platform, PermissionsAndroid, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-let ThermalPrinter: any = null;
+let ReactNativePosPrinter: any = null;
 try {
-  ThermalPrinter = require("react-native-thermal-pos-printer").default || require("react-native-thermal-pos-printer");
-} catch (e) {}
+  const mod = require("react-native-thermal-pos-printer");
+  ReactNativePosPrinter = mod.default || mod.ReactNativePosPrinter || mod;
+} catch (e) {
+  console.log("Thermal printer module not available:", e);
+}
 
 const SAVED_PRINTER_KEY = "@pos_saved_printer";
 
@@ -13,7 +16,6 @@ interface PrinterDevice {
   deviceName: string;
   macAddress: string;
   type: "bluetooth" | "usb";
-  nativeDevice?: any;
 }
 
 interface PrinterContextType {
@@ -130,11 +132,15 @@ async function requestBluetoothPermissions(): Promise<boolean> {
   }
 }
 
+async function doConnect(address: string, type: "bluetooth" | "usb"): Promise<void> {
+  await ReactNativePosPrinter.connectPrinter(address, { type: type === "usb" ? "USB" : "BLUETOOTH" });
+}
+
 export function PrinterProvider({ children }: { children: React.ReactNode }) {
   const [connectedPrinter, setConnectedPrinter] = useState<PrinterDevice | null>(null);
   const [printerList, setPrinterList] = useState<PrinterDevice[]>([]);
   const [scanning, setScanning] = useState(false);
-  const printerAvailable = Platform.OS === "android" && ThermalPrinter !== null;
+  const printerAvailable = Platform.OS === "android" && ReactNativePosPrinter !== null;
 
   useEffect(() => {
     loadSavedPrinter();
@@ -148,12 +154,8 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
         setConnectedPrinter(device);
         if (printerAvailable) {
           try {
-            await ThermalPrinter.init();
-            if (device.type === "usb") {
-              await ThermalPrinter.connectPrinter(device.macAddress, { type: "USB" });
-            } else {
-              await ThermalPrinter.connectPrinter(device.macAddress, { type: "BLUETOOTH" });
-            }
+            await ReactNativePosPrinter.init();
+            await doConnect(device.macAddress, device.type);
           } catch (err) {
             console.log("Auto-reconnect failed (will retry on print):", err);
           }
@@ -187,14 +189,35 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
 
     setScanning(true);
     try {
-      await ThermalPrinter.init();
-      const devices = await ThermalPrinter.getDeviceList();
-      const mapped: PrinterDevice[] = (devices || []).map((d: any) => ({
-        deviceName: d.name || d.deviceName || "Unknown",
-        macAddress: d.address || d.macAddress || "",
-        type: (d.type === "USB" || d.type === "usb") ? "usb" as const : "bluetooth" as const,
-        nativeDevice: d,
-      }));
+      await ReactNativePosPrinter.init();
+      const devices = await ReactNativePosPrinter.getDeviceList();
+      console.log("Raw devices from scanner:", JSON.stringify(devices));
+      const mapped: PrinterDevice[] = [];
+      for (const d of (devices || [])) {
+        let name = "Unknown";
+        let address = "";
+        let rawType = "BLUETOOTH";
+        
+        if (typeof d.getName === "function") {
+          name = d.getName() || "Unknown";
+          address = d.getAddress() || "";
+          rawType = d.getType() || "BLUETOOTH";
+        } else if (typeof d.getDevice === "function") {
+          const dev = d.getDevice();
+          name = dev.name || "Unknown";
+          address = dev.address || "";
+          rawType = dev.type || "BLUETOOTH";
+        } else {
+          name = d.name || d.deviceName || "Unknown";
+          address = d.address || d.macAddress || "";
+          rawType = d.type || "BLUETOOTH";
+        }
+        
+        const pType = (rawType.toUpperCase() === "USB") ? "usb" as const : "bluetooth" as const;
+        if (address) {
+          mapped.push({ deviceName: name, macAddress: address, type: pType });
+        }
+      }
       setPrinterList(mapped);
       if (mapped.length === 0) {
         Alert.alert("No Printers Found", "Make sure your Bluetooth printer is turned on and paired in Android Bluetooth settings, or your USB printer is connected.");
@@ -211,18 +234,16 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
   const connectPrinter = useCallback(async (device: PrinterDevice): Promise<boolean> => {
     if (!printerAvailable) return false;
     try {
-      await ThermalPrinter.init();
-      if (device.type === "usb") {
-        await ThermalPrinter.connectPrinter(device.macAddress, { type: "USB" });
-      } else {
-        await ThermalPrinter.connectPrinter(device.macAddress, { type: "BLUETOOTH" });
-      }
+      await ReactNativePosPrinter.init();
+      await doConnect(device.macAddress, device.type);
       setConnectedPrinter(device);
       await savePrinter(device);
+      Alert.alert("Connected", `Successfully connected to ${device.deviceName}`);
       return true;
     } catch (err: any) {
       console.log("Connect printer error:", err);
-      Alert.alert("Connection Failed", err.message || "Could not connect to printer");
+      const msg = err.message || "Could not connect to printer";
+      Alert.alert("Connection Failed", `${msg}\n\nMake sure the printer is turned on, paired in Bluetooth settings, and within range.`);
       return false;
     }
   }, [printerAvailable]);
@@ -230,7 +251,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
   const disconnectPrinter = useCallback(async () => {
     try {
       if (printerAvailable) {
-        await ThermalPrinter.disconnectPrinter();
+        await ReactNativePosPrinter.disconnectPrinter();
       }
     } catch (e) {}
     setConnectedPrinter(null);
@@ -241,29 +262,22 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
     if (!printerAvailable || !connectedPrinter) return false;
     try {
       try {
-        const connected = await ThermalPrinter.isConnected();
+        const connected = await ReactNativePosPrinter.isConnected();
         if (!connected) {
-          await ThermalPrinter.init();
-          if (connectedPrinter.type === "usb") {
-            await ThermalPrinter.connectPrinter(connectedPrinter.macAddress, { type: "USB" });
-          } else {
-            await ThermalPrinter.connectPrinter(connectedPrinter.macAddress, { type: "BLUETOOTH" });
-          }
+          await ReactNativePosPrinter.init();
+          await doConnect(connectedPrinter.macAddress, connectedPrinter.type);
         }
       } catch (reconnectErr) {
-        await ThermalPrinter.init();
-        if (connectedPrinter.type === "usb") {
-          await ThermalPrinter.connectPrinter(connectedPrinter.macAddress, { type: "USB" });
-        } else {
-          await ThermalPrinter.connectPrinter(connectedPrinter.macAddress, { type: "BLUETOOTH" });
-        }
+        await ReactNativePosPrinter.init();
+        await doConnect(connectedPrinter.macAddress, connectedPrinter.type);
       }
 
       const receiptText = buildReceiptText(invoiceData);
-      await ThermalPrinter.printText(receiptText);
+      await ReactNativePosPrinter.printText(receiptText);
       return true;
     } catch (err: any) {
       console.log("Print receipt error:", err);
+      Alert.alert("Print Error", err.message || "Failed to print receipt");
       return false;
     }
   }, [printerAvailable, connectedPrinter]);
