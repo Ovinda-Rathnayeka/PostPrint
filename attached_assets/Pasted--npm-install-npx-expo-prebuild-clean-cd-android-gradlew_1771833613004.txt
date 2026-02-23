@@ -1,0 +1,438 @@
+ npm install
+>> npx expo prebuild --clean
+>> cd android
+>> .\gradlew.bat assembleRelease
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+
+> expo-app@1.0.0 postinstall
+> patch-package
+
+patch-package 8.0.1
+Applying patches...
+expo-asset@12.0.12 ✔
+
+added 1191 packages, and audited 1192 packages in 2m
+
+211 packages are looking for funding
+  run `npm fund` for details
+
+39 vulnerabilities (1 low, 5 moderate, 33 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+! Git branch has uncommitted file changes
+› It's recommended to commit all changes before proceeding in case you want to revert generated changes.
+
+√ Continue with uncommitted changes? ... yes
+
+√ Cleared android code
+√ Created native directory
+√ Updated package.json
+× Prebuild failed
+Error: [android.dangerous]: withAndroidDangerousBaseMod: ENOENT: no such file or directory, open 'E:\Print Test\Pos-Android-Port\build.gradle'
+Error: [android.dangerous]: withAndroidDangerousBaseMod: ENOENT: no such file or directory, open 'E:\Print Test\Pos-Android-Port\build.gradle'
+    at Object.readFileSync (node:fs:443:20)
+    at E:\Print Test\Pos-Android-Port\plugins\withUsbPrinter.js:28:25
+    at action (E:\Print Test\Pos-Android-Port\node_modules\@expo\config-plugins\build\plugins\withMod.js:199:29)
+    at interceptingMod (E:\Print Test\Pos-Android-Port\node_modules\@expo\config-plugins\build\plugins\withMod.js:104:27)
+    at action (E:\Print Test\Pos-Android-Port\node_modules\@expo\config-plugins\build\plugins\withMod.js:204:14)
+    at async interceptingMod (E:\Print Test\Pos-Android-Port\node_modules\@expo\config-plugins\build\plugins\withMod.js:104:21)
+
+> Task :expo-module-gradle-plugin:compileKotlin
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/AndroidLibraryExtension.kt:9:24 'var targetSdk: Int?' is deprecated. Will be removed from library DSL in v9.0. Use testOptions.targetSdk or/and lint.targetSdk instead 
+
+> Configure project :
+[ExpoRootProject] Using the following versions:
+  - buildTools:  36.0.0
+  - minSdk:      24
+  - compileSdk:  36
+  - targetSdk:   36
+  - ndk:         27.1.12297006
+  - kotlin:      2.1.20
+  - ksp:         2.1.20-2.0.1
+
+> Configure project :expo
+
+Using expo modules
+  - expo-constants (18.0.13)
+  - expo-modules-core (3.0.29)
+  - [?] expo-asset (12.0.12)
+  - [?] expo-blur (15.0.8)
+  - [?] expo-crypto (15.0.8)
+  - [?] expo-file-system (19.0.21)
+  - [?] expo-font (14.0.11)
+  - [?] expo-haptics (15.0.8)
+  - [?] expo-image (3.0.11)
+  - [?] expo-image-loader (6.0.0)
+  - [?] expo-image-picker (17.0.10)
+  - [?] expo-keep-awake (15.0.8)
+  - [?] expo-linear-gradient (15.0.8)
+  - [?] expo-linking (8.0.11)
+  - [?] expo-location (19.0.8)
+  - [?] expo-navigation-bar (5.0.10)
+  - [?] expo-print (15.0.8)
+  - [?] expo-splash-screen (31.0.13)
+  - [?] expo-system-ui (6.0.9)
+  - [?] expo-web-browser (15.0.10)
+
+
+> Task :expo-constants:createExpoConfig
+The NODE_ENV environment variable is required but was not specified. Ensure the project is bundled with Expo CLI or NODE_ENV is set. Using only .env.local and .env
+
+> Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: E:\Print Test\Pos-Android-Port\node_modules\@react-native-async-storage\async-storage\android\src\javaPackage\java\com\reactnativecommunity\asyncstorage\AsyncStoragePackage.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-svg:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-safe-area-context:compileReleaseKotlin
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:59:23 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+
+> Task :react-native-thermal-pos-printer:compileReleaseKotlin
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-thermal-pos-printer/android/src/main/java/com/reactnativeposprinter/PosPrinterModule.kt:86:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-thermal-pos-printer/android/src/main/java/com/reactnativeposprinter/PosPrinterPackage.kt:9:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-thermal-pos-printer/android/src/main/java/com/reactnativeposprinter/TextToBitmapHandler.kt:111:13 'constructor(p0: CharSequence!, p1: TextPaint!, p2: Int, p3: Layout.Alignment!, p4: Float, p5: Float, p6: Boolean): StaticLayout' is deprecated. Deprecated in Java.
+
+> Task :react-native-keyboard-controller:compileReleaseKotlin                                           
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/extensions/EditText.kt:69:42 Unchecked cast of 'ArrayList<*>' to 'ArrayList<TextWatcher>'.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/interactive/KeyboardAnimationController.kt:89:16 'static fun getWindowInsetsController(p0: View): WindowInsetsControllerCompat?' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:4:8 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:69:7 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:71:9 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:73:9 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.                             
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:75:9 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.                             
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:77:9 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:79:9 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:81:9 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/managers/KeyboardControllerViewManagerImpl.kt:83:9 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/modal/ModalAttachedWatcher.kt:29:111 'val DEFAULT: Int' is deprecated. UIManagerType.DEFAULT will be deleted in the next release of React Native. Use [LEGACY] instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/modules/statusbar/StatusBarManagerCompatModuleImpl.kt:70:38 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/modules/statusbar/StatusBarManagerCompatModuleImpl.kt:73:20 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/modules/statusbar/StatusBarManagerCompatModuleImpl.kt:78:18 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/EdgeToEdgeReactViewGroup.kt:152:83 'static field FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:13:8 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:79:5 The corresponding parameter in the supertype 'ReactViewGroup' is named 'left'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:80:5 The corresponding parameter in the supertype 'ReactViewGroup' is named 'top'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:81:5 The corresponding parameter in the supertype 'ReactViewGroup' is named 'right'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:82:5 The corresponding parameter in the supertype 'ReactViewGroup' is named 'bottom'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:132:9 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:152:5 The corresponding parameter in the supertype 'ReactViewGroup' is named 'w'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:153:5 The corresponding parameter in the supertype 'ReactViewGroup' is named 'h'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:154:5 The corresponding parameter in the supertype 'ReactViewGroup' is named 'oldw'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-keyboard-controller/android/src/main/java/com/reactnativekeyboardcontroller/views/overlay/OverKeyboardViewGroup.kt:155:5 The corresponding parameter in the supertype 'ReactViewGroup' is named 'oldh'. This may cause problems when calling this function with named arguments.
+
+> Task :react-native-async-storage_async-storage:processReleaseManifest
+package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: E:\Print Test\Pos-Android-Port\node_modules\@react-native-async-storage\async-storage\android\src\main\AndroidManifest.xml 
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: E:\Print Test\Pos-Android-Port\node_modules\@react-native-async-storage\async-storage\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-keyboard-controller:processReleaseManifest
+package="com.reactnativekeyboardcontroller" found in source AndroidManifest.xml: E:\Print Test\Pos-Android-Port\node_modules\react-native-keyboard-controller\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativekeyboardcontroller" from the source AndroidManifest.xml: E:\Print Test\Pos-Android-Port\node_modules\react-native-keyboard-controller\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-safe-area-context:processReleaseManifest
+package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: E:\Print Test\Pos-Android-Port\node_modules\react-native-safe-area-context\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: E:\Print Test\Pos-Android-Port\node_modules\react-native-safe-area-context\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-thermal-pos-printer:processReleaseManifest
+package="com.reactnativeposprinter" found in source AndroidManifest.xml: E:\Print Test\Pos-Android-Port\node_modules\react-native-thermal-pos-printer\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativeposprinter" from the source AndroidManifest.xml: E:\Print Test\Pos-Android-Port\node_modules\react-native-thermal-pos-printer\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-thermal-pos-printer:mergeReleaseConsumerProguardFiles
+Supplied consumer proguard configuration does not exist: E:\Print Test\Pos-Android-Port\node_modules\react-native-thermal-pos-printer\android\consumer-rules.pro
+
+> Task :react-native-screens:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-screens\android\build\intermediates\cxx\RelWithDebInfo\6t2e1e3i\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-screens\android\build\intermediates\cxx\RelWithDebInfo\6t2e1e3i\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.        
+
+> Task :app:createBundleReleaseJsAndAssets
+React Compiler enabled
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)                                    
+
+> Task :expo-modules-core:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\expo-modules-core\android\build\intermediates\cxx\RelWithDebInfo\64465s5f\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\expo-modules-core\android\build\intermediates\cxx\RelWithDebInfo\64465s5f\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+
+> Task :app:createBundleReleaseJsAndAssets
+Android node_modules\expo-router\entry.js ΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ  0.0% (0/1)
+Android node_modules\expo-router\entry.js ΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ  1.0% (1/1)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 21.8% (14/40 
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 25.5% ( 52/107)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 34.9% (135/301)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 41.2% (234/372)
+
+> Task :react-native-worklets:buildCMakeRelWithDebInfo[arm64-v8a][worklets]                             
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-worklets\android\build\intermediates\cxx\RelWithDebInfo\33m4z242\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-worklets\android\build\intermediates\cxx\RelWithDebInfo\33m4z242\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.       
+
+> Task :app:createBundleReleaseJsAndAssets
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 45.7% (289/447)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 47.2% (358/521)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 49.7% (452/662)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 56.5% (525/716)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 56.7% (549/799)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 58.0% (659/878)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 59.4% (708/934)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæΓûæΓûæΓûæ 61.4% ( 808/1031)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæΓûæ 77.2% ( 943/1073)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæ 81.7% ( 998/1104)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæ 84.6% (1065/1179)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæΓûæ 86.5% (1164/1258)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæ 89.4% (1236/1307)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæ 90.6% (1283/1392)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæ 90.6% (1311/1406)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæ 92.9% (1391/1450)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæΓûæ 92.9% (1444/1511)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæ 96.8% (1526/1552)
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæ 99.9% (1597/1597)
+Android Bundled 116824ms node_modules\expo-router\entry.js (1597 modules)                               
+Android node_modules\expo-router\entry.js ΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûôΓûæ 99.9% (1597/1597)
+Writing bundle output to: android\app\build\generated\assets\createBundleReleaseJsAndAssets\index.android.bundle                                                                                                
+Writing sourcemap output to: android\app\build\intermediates\sourcemaps\react\release\index.android.bundle.packager.map
+Copying 63 asset files
+Done writing bundle output
+Done writing sourcemap output
+
+> Task :react-native-screens:compileReleaseKotlin
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:56:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'name'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:57:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'reactContext'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:70:17 'constructor(name: String, className: String, canOverrideExistingModule: Boolean, needsEagerInit: Boolean, hasConstants: Boolean, isCxxModule: Boolean, isTurboModule: Boolean): ReactModuleInfo' is deprecated. This constructor is deprecated and will be removed in the future. Use ReactModuleInfo(String, String, boolean, boolean, boolean, boolean)].
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:48:77 Unchecked cast of '(CoordinatorLayout.Behavior<View!>?..CoordinatorLayout.Behavior<*>?)' to 'BottomSheetBehavior<Screen>'.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:383:36 'fun setTranslucent(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:402:36 'fun setColor(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:420:36 'fun setNavigationBarColor(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.   
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:437:36 'fun setNavigationBarTranslucent(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:217:31 'var targetElevation: Float' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:220:13 'fun setHasOptionsMenu(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:397:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:404:22 'fun onPrepareOptionsMenu(p0: Menu): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:407:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:412:22 'fun onCreateOptionsMenu(p0: Menu, p1: MenuInflater): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt:435:18 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:203:14 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:220:14 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:237:14 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:246:14 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:55:42 'fun replaceSystemWindowInsets(p0: Int, p1: Int, p2: Int, p3: Int): WindowInsetsCompat' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:56:39 'val systemWindowInsetLeft: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:58:39 'val systemWindowInsetRight: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:59:39 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:102:53 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:106:37 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:113:48 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:116:32 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:162:49 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:218:43 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:218:72 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:224:16 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:241:55 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:283:13 'fun setColor(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:285:13 'fun setTranslucent(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:289:13 'fun setNavigationBarColor(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:290:13 'fun setNavigationBarTranslucent(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:354:42 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:356:48 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:359:57 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:360:63 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:7:8 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:25:13 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:32:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'left'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:33:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'top'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:34:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'right'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:35:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'bottom'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:71:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:72:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:79:46 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:83:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:84:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:95:34 The corresponding parameter in the supertype 'RootView' is named 't'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:63:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchX'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:64:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchY'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:68:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchX'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:69:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchY'. This may cause problems when calling this function with named arguments.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/TabsHostViewManager.kt:37:9 The corresponding parameter in the supertype 'TabsHostViewManager' is named 'view'. This may cause problems when calling this function with named arguments.
+
+> Task :app:configureCMakeRelWithDebInfo[arm64-v8a]
+C/C++: CMake Warning in E:/Print Test/Pos-Android-Port/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt:
+C/C++:   The object file directory
+C/C++:     E:/Print Test/Pos-Android-Port/android/app/.cxx/RelWithDebInfo/6k6d113e/arm64-v8a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/./                 
+C/C++:   has 180 characters.  The maximum full path to an object file is 250
+C/C++:   characters (see CMAKE_OBJECT_PATH_MAX).  Object file                                           
+C/C++:     react/renderer/components/rngesturehandler_codegen/rngesturehandler_codegenJSI-generated.cpp.o
+C/C++:   cannot be safely placed under this directory.  The build may not work
+C/C++:   correctly.
+
+> Task :app:configureCMakeRelWithDebInfo[armeabi-v7a]
+C/C++: CMake Warning in E:/Print Test/Pos-Android-Port/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt:
+C/C++:   The object file directory
+C/C++:     E:/Print Test/Pos-Android-Port/android/app/.cxx/RelWithDebInfo/6k6d113e/armeabi-v7a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/./
+C/C++:   has 182 characters.  The maximum full path to an object file is 250
+C/C++:   characters (see CMAKE_OBJECT_PATH_MAX).  Object file
+C/C++:     react/renderer/components/rngesturehandler_codegen/rngesturehandler_codegenJSI-generated.cpp.o
+C/C++:   cannot be safely placed under this directory.  The build may not work
+C/C++:   correctly.
+
+> Task :expo-modules-core:processReleaseManifest
+E:\Print Test\Pos-Android-Port\node_modules\expo-modules-core\android\src\main\AndroidManifest.xml:8:9-11:45 Warning:
+        meta-data#com.facebook.soloader.enabled@android:value was tagged at AndroidManifest.xml:8 to replace other declarations but no other declaration present
+
+> Task :app:configureCMakeRelWithDebInfo[x86_64]
+C/C++: CMake Warning in E:/Print Test/Pos-Android-Port/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt:
+C/C++:   The object file directory
+C/C++:     E:/Print Test/Pos-Android-Port/android/app/.cxx/RelWithDebInfo/6k6d113e/x86_64/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/./
+C/C++:   has 177 characters.  The maximum full path to an object file is 250
+C/C++:   characters (see CMAKE_OBJECT_PATH_MAX).  Object file
+C/C++:     react/renderer/components/rngesturehandler_codegen/rngesturehandler_codegenJSI-generated.cpp.o
+C/C++:   cannot be safely placed under this directory.  The build may not work
+C/C++:   correctly.
+
+> Task :expo-modules-core:compileReleaseKotlin
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:48:87 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:91:85 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:120:83 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.  
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/apploader/AppLoaderProvider.kt:34:52 Unchecked cast of 'Class<*>!' to 'Class<out HeadlessAppLoader>'.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:30:8 'typealias ErrorManagerModule = JSLoggerModule' is deprecated. Use JSLoggerModule instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:253:21 'typealias ErrorManagerModule = JSLoggerModule' is deprecated. Use JSLoggerModule instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:343:21 'val DEFAULT: Int' is deprecated. UIManagerType.DEFAULT will be deleted in the next release of React Native. Use [LEGACY] instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/defaultmodules/NativeModulesProxyModule.kt:16:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt:65:51 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt:69:22 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewDefinitionBuilder.kt:464:16 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewDefinitionBuilder.kt:464:30 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewManagerDefinition.kt:41:16 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewManagerDefinition.kt:41:30 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+
+> Task :expo-modules-core:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :expo-constants:compileReleaseKotlin
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo-constants/android/src/main/java/expo/modules/constants/ConstantsModule.kt:12:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
+
+> Task :expo:compileReleaseKotlin
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ExpoModulesPackage.kt:34:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ExpoReactHostFactory.kt:8:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ExpoReactHostFactory.kt:80:22 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:24:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:58:33 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:105:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:105:38 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.        
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:113:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:114:21 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:168:36 'constructor(activity: Activity, reactNativeHost: ReactNativeHost?, appKey: String?, launchOptions: Bundle?, fabricEnabled: Boolean): ReactDelegate' is deprecated. Deprecated since 0.81.0, use one of the other constructors instead.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:279:77 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:282:22 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:286:54 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:6:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:15:9 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:47:60 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:7:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:16:23 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:89:16 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:101:38 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/fetch/ExpoFetchModule.kt:30:39 'constructor(reactContext: ReactContext): ForwardingCookieHandler' is deprecated. Use the default constructor.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/fetch/NativeResponse.kt:42:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/expo/android/src/main/java/expo/modules/fetch/NativeResponse.kt:44:11 'fun deallocate(): Unit' is deprecated. Use sharedObjectDidRelease() instead.    
+
+> Task :react-native-worklets:externalNativeBuildRelease
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-worklets\android\build\intermediates\cmake\release\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-worklets\android\build\intermediates\cmake\release\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+
+> Task :react-native-worklets:compileReleaseJavaWithJavac
+Note: E:\Print Test\Pos-Android-Port\node_modules\react-native-worklets\android\src\main\java\com\swmansion\worklets\WorkletsPackage.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :app:processReleaseMainManifest
+E:\Print Test\Pos-Android-Port\android\app\src\main\AndroidManifest.xml Warning:
+        provider#expo.modules.filesystem.FileSystemFileProvider@android:authorities was tagged at AndroidManifest.xml:0 to replace other declarations but no other declaration present
+E:\Print Test\Pos-Android-Port\android\app\src\main\AndroidManifest.xml Warning:                        
+        activity#expo.modules.imagepicker.ExpoCropImageActivity@android:exported was tagged at AndroidManifest.xml:0 to replace other declarations but no other declaration present
+
+> Task :react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a][reanimated]
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-reanimated\android\build\intermediates\cxx\RelWithDebInfo\50o5s5b4\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-reanimated\android\build\intermediates\cxx\RelWithDebInfo\50o5s5b4\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.     
+
+> Task :react-native-reanimated:externalNativeBuildRelease
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-reanimated\android\build\intermediates\cmake\release\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-reanimated\android\build\intermediates\cmake\release\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+
+> Task :react-native-reanimated:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-gesture-handler:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-gesture-handler\android\build\intermediates\cxx\RelWithDebInfo\6e4g57gp\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead 
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\node_modules\react-native-gesture-handler\android\build\intermediates\cxx\RelWithDebInfo\6e4g57gp\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+
+> Task :react-native-gesture-handler:compileReleaseKotlin
+w: file:///E:/Print%20Test/Pos-Android-Port/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerRootView.kt:41:43 The corresponding parameter in the supertype 'ReactViewGroup' is named 'ev'. This may cause problems when calling this function with named arguments.
+
+> Task :app:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\android\app\build\intermediates\cxx\RelWithDebInfo\6k6d113e\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from 'C:\Users\sahan\.gradle\caches\8.14.3\transforms\145780e1d71abfdd0f73b65783049973\transformed\react-android-0.81.5-release\prefab\modules\reactnative\libs\android.arm64-v8a\libreactnative.so' to 'E:\Print Test\Pos-Android-Port\android\app\build\intermediates\cxx\RelWithDebInfo\6k6d113e\obj\arm64-v8a\libreactnative.so' failed. Doing a slower copy instead.
+
+> Task :app:compileReleaseKotlin FAILED
+e: file:///E:/Print%20Test/Pos-Android-Port/android/app/src/main/java/com/myapp/MainActivity.kt:18:14 Unresolved reference 'R'.
+e: file:///E:/Print%20Test/Pos-Android-Port/android/app/src/main/java/com/myapp/MainActivity.kt:35:11 Unresolved reference 'BuildConfig'.
+e: file:///E:/Print%20Test/Pos-Android-Port/android/app/src/main/java/com/myapp/MainApplication.kt:32:60 Unresolved reference 'BuildConfig'.
+e: file:///E:/Print%20Test/Pos-Android-Port/android/app/src/main/java/com/myapp/MainApplication.kt:34:52 Unresolved reference 'BuildConfig'.
+e: file:///E:/Print%20Test/Pos-Android-Port/android/app/src/main/java/com/myapp/MainApplication.kt:44:28 Unresolved reference 'BuildConfig'.
+
+[Incubating] Problems report is available at: file:///E:/Print%20Test/Pos-Android-Port/android/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 26m 25s
+634 actionable tasks: 634 executed
+PS E:\Print Test\Pos-Android-Port\android> 
+
+
+
+
+
+

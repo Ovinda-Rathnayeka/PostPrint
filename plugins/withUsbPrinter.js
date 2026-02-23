@@ -1,4 +1,9 @@
-const { withAppBuildGradle, withMainApplication, withDangerousMod } = require("expo/config-plugins");
+const {
+  withAppBuildGradle,
+  withProjectBuildGradle,
+  withMainApplication,
+  withDangerousMod,
+} = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
@@ -17,27 +22,18 @@ function withUsbPrinterDependency(config) {
 }
 
 function withJitpackRepo(config) {
-  return withDangerousMod(config, [
-    "android",
-    async (config) => {
-      const buildGradlePath = path.join(
-        config.modRequest.platformProjectRoot,
-        "..",
-        "build.gradle"
-      );
-      let contents = fs.readFileSync(buildGradlePath, "utf-8");
-      if (!contents.includes("jitpack.io")) {
-        contents = contents.replace(
-          /allprojects\s*\{\s*repositories\s*\{/,
-          `allprojects {
+  return withProjectBuildGradle(config, (config) => {
+    if (config.modResults.contents.includes("jitpack.io")) {
+      return config;
+    }
+    config.modResults.contents = config.modResults.contents.replace(
+      /allprojects\s*\{\s*repositories\s*\{/,
+      `allprojects {
     repositories {
         maven { url 'https://jitpack.io' }`
-        );
-        fs.writeFileSync(buildGradlePath, contents);
-      }
-      return config;
-    },
-  ]);
+    );
+    return config;
+  });
 }
 
 function withUsbPrinterNativeModule(config) {
@@ -149,6 +145,7 @@ public class UsbPrinterModule extends ReactContextBaseJavaModule {
             UsbDevice device = connection.getDevice();
 
             if (!usbManager.hasPermission(device)) {
+                final int finalConnIndex = connIndex;
                 int flags = 0;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     flags = PendingIntent.FLAG_MUTABLE;
@@ -166,7 +163,7 @@ public class UsbPrinterModule extends ReactContextBaseJavaModule {
                             boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
                             if (granted) {
                                 try {
-                                    doConnect(connections[connIndex >= connections.length ? 0 : connIndex], promise);
+                                    doConnect(connections[finalConnIndex], promise);
                                 } catch (Exception e) {
                                     promise.reject("CONNECTION_FAILED", e.getMessage(), e);
                                 }
@@ -258,7 +255,10 @@ public class UsbPrinterModule extends ReactContextBaseJavaModule {
     }
 }
 `;
-      fs.writeFileSync(path.join(packageDir, "UsbPrinterModule.java"), moduleCode);
+      fs.writeFileSync(
+        path.join(packageDir, "UsbPrinterModule.java"),
+        moduleCode
+      );
 
       const packageCode = `package com.myapp.usbprinter;
 
@@ -285,7 +285,10 @@ public class UsbPrinterPackage implements ReactPackage {
     }
 }
 `;
-      fs.writeFileSync(path.join(packageDir, "UsbPrinterPackage.java"), packageCode);
+      fs.writeFileSync(
+        path.join(packageDir, "UsbPrinterPackage.java"),
+        packageCode
+      );
 
       return config;
     },
