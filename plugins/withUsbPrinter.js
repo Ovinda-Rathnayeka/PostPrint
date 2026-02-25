@@ -154,13 +154,17 @@ public class UsbPrinterModule extends ReactContextBaseJavaModule {
 
             if (!usbManager.hasPermission(device)) {
                 final int finalConnIndex = connIndex;
+                Intent usbIntent = new Intent(ACTION_USB_PERMISSION);
+                usbIntent.setPackage(getReactApplicationContext().getPackageName());
                 int flags = 0;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    flags = PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     flags = PendingIntent.FLAG_MUTABLE;
                 }
                 PendingIntent permissionIntent = PendingIntent.getBroadcast(
                     getReactApplicationContext(), 0,
-                    new Intent(ACTION_USB_PERMISSION), flags
+                    usbIntent, flags
                 );
 
                 BroadcastReceiver usbReceiver = new BroadcastReceiver() {
