@@ -356,14 +356,26 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
           await ReactNativePosPrinter.init();
           await ReactNativePosPrinter.connectPrinter(connectedPrinter.macAddress, { type: "BLUETOOTH" });
         }
-        await ReactNativePosPrinter.printText(receiptText);
-        try {
-          await ReactNativePosPrinter.cutPaper();
-        } catch (cutErr) {
+        let printed = false;
+        if (typeof ReactNativePosPrinter.printFormattedTextAndCut === "function") {
+          await ReactNativePosPrinter.printFormattedTextAndCut(receiptText);
+          printed = true;
+        } else if (typeof ReactNativePosPrinter.printFormattedText === "function") {
+          await ReactNativePosPrinter.printFormattedText(receiptText);
+          printed = true;
+        }
+        if (!printed) {
+          await ReactNativePosPrinter.printText(receiptText);
+        }
+        if (!printed || typeof ReactNativePosPrinter.printFormattedTextAndCut !== "function") {
           try {
-            await ReactNativePosPrinter.sendRawCommand([0x1D, 0x56, 0x00]);
-          } catch (rawCutErr) {
-            console.log("Bluetooth cut command not supported:", rawCutErr);
+            if (typeof ReactNativePosPrinter.cutPaper === "function") {
+              await ReactNativePosPrinter.cutPaper();
+            } else if (typeof ReactNativePosPrinter.sendRawCommand === "function") {
+              await ReactNativePosPrinter.sendRawCommand([0x1D, 0x56, 0x00]);
+            }
+          } catch (cutErr) {
+            console.log("Cut command not supported:", cutErr);
           }
         }
         return true;

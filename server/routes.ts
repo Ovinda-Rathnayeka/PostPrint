@@ -165,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         billno = "CT" + num;
       }
 
-      const now = new Date();
+      const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Colombo" }));
       const pad = (n: number) => String(n).padStart(2, '0');
       const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
       const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
@@ -501,7 +501,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders", async (req: Request, res: Response) => {
     try {
       const { branch, date } = req.query;
-      const dateFilter = date || new Date().toISOString().slice(0, 10);
+      const sriLankaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Colombo" }));
+      const slPad = (n: number) => String(n).padStart(2, '0');
+      const dateFilter = date || `${sriLankaNow.getFullYear()}-${slPad(sriLankaNow.getMonth() + 1)}-${slPad(sriLankaNow.getDate())}`;
       const rows = await query(
         "SELECT bs.id, bs.billNo, bs.billDate, bs.amount, bs.discount, bs.subTotal, bs.paytype, bs.customer, bs.servicecharge, bs.user FROM nista_bill_summary bs WHERE bs.branch = ? AND DATE(bs.billDate) = ? AND bs.invoiceType = 'inhouse' ORDER BY bs.id DESC",
         [branch || "1", dateFilter]
@@ -537,7 +539,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/daily-summary", async (req: Request, res: Response) => {
     try {
       const { branch, date } = req.query;
-      const dateFilter = date || new Date().toISOString().slice(0, 10);
+      const sriLankaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Colombo" }));
+      const slPad = (n: number) => String(n).padStart(2, '0');
+      const dateFilter = date || `${sriLankaNow.getFullYear()}-${slPad(sriLankaNow.getMonth() + 1)}-${slPad(sriLankaNow.getDate())}`;
       const rows = await query(
         "SELECT COUNT(*) as totalOrders, COALESCE(SUM(subTotal), 0) as totalSales, COALESCE(SUM(discount), 0) as totalDiscount, COALESCE(SUM(servicecharge), 0) as totalServiceCharge FROM nista_bill_summary WHERE branch = ? AND DATE(billDate) = ? AND invoiceType = 'inhouse'",
         [branch || "1", dateFilter]
