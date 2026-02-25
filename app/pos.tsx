@@ -66,6 +66,7 @@ export default function POSScreen() {
   const [successBill, setSuccessBill] = useState<string | null>(null);
   const [successBalance, setSuccessBalance] = useState<number>(0);
   const [showNotes, setShowNotes] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(true);
 
   const isNative = Platform.OS !== "web";
 
@@ -79,6 +80,21 @@ export default function POSScreen() {
       RNStatusBar.setHidden(true);
     }
   }, []);
+
+  const toggleFullScreen = useCallback(() => {
+    if (Platform.OS === "android") {
+      if (isFullScreen) {
+        NavigationBar.setVisibilityAsync("visible");
+        RNStatusBar.setHidden(false);
+        setIsFullScreen(false);
+      } else {
+        NavigationBar.setVisibilityAsync("hidden");
+        NavigationBar.setBehaviorAsync("overlay-swipe");
+        RNStatusBar.setHidden(true);
+        setIsFullScreen(true);
+      }
+    }
+  }, [isFullScreen]);
 
   const webTopInset = Platform.OS === "web" ? 20 : 0;
 
@@ -683,8 +699,8 @@ export default function POSScreen() {
                 <Ionicons name="home" size={18} color="#FFF" />
                 <Text style={styles.actionKeyText}>Home</Text>
               </Pressable>
-              <Pressable style={[styles.actionKey, { backgroundColor: "#5A6577" }]} onPress={() => router.push("/orders")}>
-                <Ionicons name="list" size={18} color="#FFF" />
+              <Pressable style={[styles.actionKey, { backgroundColor: isFullScreen ? "#5A6577" : Colors.light.primary }]} onPress={toggleFullScreen}>
+                <Ionicons name={isFullScreen ? "contract" : "expand"} size={18} color="#FFF" />
                 <Text style={styles.actionKeyText}>Full</Text>
               </Pressable>
 
