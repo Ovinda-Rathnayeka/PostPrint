@@ -445,7 +445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const itemRows = await query(
-        "SELECT nbm.quantity, nbm.uprice, nbm.amount, nbm.icode, mm.menuname, mm.menucode FROM nista_bill_master nbm LEFT JOIN menu_master mm ON nbm.icode = mm.menucode WHERE nbm.billno = ? GROUP BY mm.menucode",
+        "SELECT nbm.quantity, nbm.uprice, nbm.amount, nbm.icode, mm.menuname, mm.menucode FROM nista_bill_master nbm LEFT JOIN menu_master mm ON nbm.icode = mm.menucode WHERE nbm.billno = ?",
         [billNo]
       );
 
