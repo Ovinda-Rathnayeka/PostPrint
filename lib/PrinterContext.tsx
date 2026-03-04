@@ -57,42 +57,46 @@ function padLeft(text: string, width: number): string {
   return " ".repeat(width - text.length) + text;
 }
 
-function buildReceiptText(data: any): string {
+function buildReceiptText(data: any, isBluetooth: boolean = false): string {
   const W = 48;
   const sep = "=".repeat(W);
   const sep2 = "-".repeat(W);
   let r = "";
 
-  r += `[C]<b><font size='big'>${data.company?.name || ""}</font></b>\n`;
-  if (data.company?.address) r += `[C]${data.company.address}\n`;
-  if (data.company?.email) r += `[C]${data.company.email}\n`;
-  if (data.company?.phone) r += `[C]Tel : ${data.company.phone}\n`;
-  r += `[C]${sep}\n`;
-  r += `[L]Outlet       : ${data.company?.branch || ""}\n`;
-  r += `[L]Invoice No   : ${data.invoice?.id || ""}\n`;
-  r += `[L]Invoice Date : ${data.invoice?.date || ""}\n`;
-  r += `[L]Cashier      : ${data.invoice?.cashier || ""}\n`;
-  r += `[C]${sep2}\n`;
+  const prefix = isBluetooth ? "" : "[C]";
+  const leftPrefix = isBluetooth ? "" : "[L]";
+  const rightPrefix = isBluetooth ? "" : "[R]";
+
+  r += `${prefix}<b><font size='big'>${data.company?.name || ""}</font></b>\n`;
+  if (data.company?.address) r += `${prefix}${data.company.address}\n`;
+  if (data.company?.email) r += `${prefix}${data.company.email}\n`;
+  if (data.company?.phone) r += `${prefix}Tel : ${data.company.phone}\n`;
+  r += `${prefix}${sep}\n`;
+  r += `${leftPrefix}Outlet       : ${data.company?.branch || ""}\n`;
+  r += `${leftPrefix}Invoice No   : ${data.invoice?.id || ""}\n`;
+  r += `${leftPrefix}Invoice Date : ${data.invoice?.date || ""}\n`;
+  r += `${leftPrefix}Cashier      : ${data.invoice?.cashier || ""}\n`;
+  r += `${prefix}${sep2}\n`;
 
   for (const item of (data.items || [])) {
     const line = padRight(item.name, 24) + padLeft(item.qty, 6) + padLeft(item.price, 9) + padLeft(item.amt, 9);
-    r += `[L]${line}\n`;
+    r += `${leftPrefix}${line}\n`;
   }
 
-  r += `[C]${sep2}\n`;
-  r += `[R]Sub Total (LKR) :      ${data.summary?.subTotal || "0.00"}\n`;
+  r += `${prefix}${sep2}\n`;
+  r += `${rightPrefix}Sub Total (LKR) :      ${data.summary?.subTotal || "0.00"}\n`;
   const scAmt = parseFloat(data.summary?.serviceCharge || "0");
-  if (scAmt > 0) r += `[R]Service Charge  :      ${scAmt.toFixed(2)}\n`;
+  if (scAmt > 0) r += `${rightPrefix}Service Charge  :      ${scAmt.toFixed(2)}\n`;
   const discAmt = parseFloat(data.summary?.discount || "0");
-  if (discAmt > 0) r += `[R]Discount        :     -${discAmt.toFixed(2)}\n`;
-  r += `[R]<b>Grand Total (LKR) :      ${data.summary?.grandTotal || "0.00"}</b>\n`;
-  r += `[R]Payment (LKR) :      ${data.summary?.payment || "0.00"}\n`;
+  if (discAmt > 0) r += `${rightPrefix}Discount        :     -${discAmt.toFixed(2)}\n`;
+  r += `${rightPrefix}<b>Grand Total (LKR) :      ${data.summary?.grandTotal || "0.00"}</b>\n`;
+  r += `${rightPrefix}Payment (LKR) :      ${data.summary?.payment || "0.00"}\n`;
   const balAmt = parseFloat(data.summary?.balance || "0");
-  if (balAmt > 0) r += `[R]Balance (LKR) :      ${balAmt.toFixed(2)}\n`;
-  r += `[C]${sep2}\n`;
-  r += `[C]Thank you, come again !!!\n`;
-  r += `[C]<font size='small'>Software By MyBiz.lk +94 777721122</font>\n`;
-  r += `[L]\n[L]\n[L]\n[L]\n`;
+  if (balAmt > 0) r += `${rightPrefix}Balance (LKR) :      ${balAmt.toFixed(2)}\n`;
+  r += `${prefix}${sep2}\n`;
+  r += `${prefix}Thank you, come again !!!\n`;
+  r += `${prefix}<font size='small'>Software By MyBiz.lk +94 777721122</font>\n`;
+  r += `${leftPrefix}\n${leftPrefix}\n${leftPrefix}\n${leftPrefix}\n`;
 
   return r;
 }
@@ -323,7 +327,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
 
-    const receiptText = buildReceiptText(invoiceData);
+    const receiptText = buildReceiptText(invoiceData, connectedPrinter.type === "bluetooth");
 
     try {
       if (connectedPrinter.type === "usb") {
