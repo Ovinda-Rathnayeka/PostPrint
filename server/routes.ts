@@ -154,8 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { items, total, discount, discountRate, serviceCharge, paytype, cash, card, cardRef, bankName, userId, branch, customer } = req.body;
 
       const lastBillResult = await query(
-        "SELECT billNo FROM nista_bill_summary WHERE branch = ? AND billNo LIKE 'CT%' ORDER BY CAST(SUBSTRING(billNo, 3) AS UNSIGNED) DESC LIMIT 1",
-        [branch]
+        "SELECT billNo FROM nista_bill_summary WHERE billNo LIKE 'CT%' ORDER BY CAST(SUBSTRING(billNo, 3) AS UNSIGNED) DESC LIMIT 1"
       );
 
       let billno = "CT1001";
