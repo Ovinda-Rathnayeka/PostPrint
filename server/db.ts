@@ -36,6 +36,12 @@ export function decryptAesGcm(encryptedB64: string): string {
     const encryptedBuffer = Buffer.from(encryptedB64, "base64");
     const nonce = encryptedBuffer.subarray(0, 12);
     const ciphertextWithTag = encryptedBuffer.subarray(12);
+    
+    // Check if the input is actually encrypted with GCM
+    if (nonce.length < 12 || ciphertextWithTag.length < 16) {
+      return encryptedB64;
+    }
+
     const tagLength = 16;
     const ciphertext = ciphertextWithTag.subarray(0, ciphertextWithTag.length - tagLength);
     const authTag = ciphertextWithTag.subarray(ciphertextWithTag.length - tagLength);
